@@ -17,9 +17,9 @@
       "uninstallable": true,
       "artifact": {
         "name": "samagotia_clusters@0.16.0.tgz",
-        "size": 5261746,
-        "sha256": "d385e040bc5c96652b9b7259005ebff39bb2a561e10281ea85fb647499093540",
-        "url": "https://github.com/struqt-solutions/samagotia-clusters/releases/download/catalog/samagotia_clusters@0.16.0.tgz"
+        "size": 5261708,
+        "sha256": "dc87ec1772c145dd36e1030c76a84b7641590f5ec743d7f2d5fa50b8e2bd91c8",
+        "url": "https://github.com/samagotia/idrive7-instrument-clusters/releases/download/catalog/samagotia_clusters@0.16.0.tgz"
       }
     }
   ]

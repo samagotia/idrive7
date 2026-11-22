@@ -10,7 +10,7 @@ This is a parked-test prerelease. Requires MGU Store already installed and **clu
 
 Add this GitHub repository as a source in MGU Store. The binary catalog is:
 
-`https://github.com/struqt-solutions/samagotia-clusters/releases/download/catalog/catalog.json`
+`https://github.com/samagotia/idrive7-instrument-clusters/releases/download/catalog/catalog.json`
 
 The app starts with the **BMW cluster** selected and demo data off on the car. Select F8X only while parked for initial checks. Missing/stale speed or RPM, or renderer disconnection, returns to BMW and requires manual reselection. Live readers are source mapped; G82 reception, cold-limit tracking and native BMW warning takeover remain unverified on the car.
 
@@ -27,7 +27,7 @@ Open http://127.0.0.1:8078/ or double-click **Start Preview.command**. Every veh
 ## Build and test
 
 ```sh
-python3 tools/build_clusters.py --out dist/releases --repo struqt-solutions/samagotia-clusters
+python3 tools/build_clusters.py --out dist/releases --repo samagotia/idrive7-instrument-clusters
 python3 tools/build_clusters.py --stage-only
 for test in bench/test*.js; do node "$test" || exit 1; done
 ```
