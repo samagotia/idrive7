@@ -1,0 +1,13 @@
+dist/
+oap-sdk/
+node_modules/
+bench/.data/
+preview/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+*.pem
+*.key
+.env
+.env.*

@@ -1,0 +1,9 @@
+{
+  "apps": {
+    "samagotia_clusters": {
+      "title": "Samagotia Clusters",
+      "description": "Custom instrument cluster designs for BMW iDrive 7. Includes F8X with live vehicle data and parked-test fallback to the BMW cluster.",
+      "author": "Samagotia"
+    }
+  }
+}

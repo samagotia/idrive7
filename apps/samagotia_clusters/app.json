@@ -1,0 +1,649 @@
+{
+  "id": "samagotia_clusters",
+  "title": "Samagotia Clusters",
+  "description": "Custom instrument cluster designs for BMW iDrive 7. Includes F8X with live vehicle data and parked-test fallback to the BMW cluster.",
+  "vendor": "Samagotia",
+  "loggingId": "SMGC",
+  "version": "0.16.0",
+  "iconGlyph": "SMG",
+  "shared": [
+    "f8x_runtime.js",
+    "f8x_motion.js",
+    "f8x_page.js",
+    "f8x_vehicle.js",
+    "f8x_cruise.js",
+    "f8x_cruise_art.js",
+    "f8x_fuel_warning.js",
+    "f8x_fuel_warning_art.js",
+    "f8x_brake.js",
+    "f8x_brake_art.js",
+    "f8x_rpm_limit.js",
+    "f8x_layouts.js",
+    "f8x_data.js",
+    "f8x_text.js",
+    "f8x_icons.js",
+    "f8x_shaders.js",
+    "f82_sprite.js",
+    "cluster_render_client.js",
+    "f8x_info_data.js",
+    "f8x_car_formats.js",
+    "f8x_info_format.js",
+    "f8x_doors.js",
+    "f8x_door_art.js",
+    "f8x_warning.js"
+  ],
+  "signals": {
+    "de.bmw.infotainment.vehicle.CDS": {
+      "statusEngineSpeed2": "rs",
+      "statusEngineTemperature": "rs",
+      "statusHandBrake": "rs"
+    },
+    "de.bmw.infotainment.vehicle.Vehicle2": {
+      "statusCarSpeed2": "rs",
+      "statusVehiclePartType": "rs"
+    },
+    "de.bmw.infrastructure.VehicleCondition": {
+      "VehicleCondition": "s",
+      "_optional": "F8x tachometer READY position and startup odometer"
+    },
+    "de.bmw.powertrain.AcceleratorPedal": {
+      "AngleAcceleratorPedal": "s",
+      "_optional": "F8x full-pedal shift lights"
+    },
+    "de.bmw.body.Light": {
+      "StatusFunctionsIndicators": "s",
+      "StatusFunctionsIndicators2": "s",
+      "_optional": "F8x turn signals"
+    },
+    "de.bmw.infrastructure.VehicleInformation": {
+      "statusGearboxDrive": "s",
+      "DataPowerTrain2": "s",
+      "DataPowerTrain2CRC": "s"
+    },
+    "com.harman.infotainment.systemfunctions.tasu.tasu.InternalTasu": {
+      "_instances": "SystemFunctionsInternalTasuInst1",
+      "_methods": [
+        "sendTasuRequest"
+      ],
+      "_broadcasts": [
+        "sendTasuResponse"
+      ]
+    },
+    "de.bmw.infotainment.KombiIF": {
+      "statusRangeTankStatus": "rs",
+      "statusBordcomputerAverage": "rs",
+      "statusShowTimeDate": "rs",
+      "_optional": "F8X optional information readings and displayed car time/date"
+    },
+    "de.bmw.infotainment.vehicle.Vehicle": {
+      "statusDayNightChangeOver": "rs",
+      "_optional": "F8X day/night artwork",
+      "statusNewCurrentUnitsStatusExt": "rs"
+    },
+    "de.bmw.infotainment.misc.MDrive": {
+      "dataDisplayGearbox": "s",
+      "_optional": "S or M next to the gear"
+    },
+    "de.bmw.infrastructure.EnvironmentalInformation": {
+      "ExteriorTemperature": "rs"
+    },
+    "de.bmw.infotainment.displaydata.DisplayDataServer2": {
+      "functionalLibraryData": "rs",
+      "_optional": "F8X cruise status and set-speed marker"
+    },
+    "de.bmw.body.DoorsWindowsRoofMirrors": {
+      "CentralLockingSystemAndPanelStatus": "s",
+      "CentralLockingSystemAndPanelStatus2": "s",
+      "_optional": "F8X closure contact status; notification-only"
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "canvas",
+      "title": "Samagotia Clusters",
+      "buttons": [
+        [
+          "BTN_SETTINGS",
+          "All settings"
+        ]
+      ]
+    }
+  ],
+  "config": {
+    "target": "panel",
+    "parkedTest": true,
+    "statusName": "Cluster",
+    "socketPath": "/dev/shm/cluster-render/render.sock",
+    "utcOffsetMinutes": null,
+    "tankLitres": 65
+  },
+  "settings": [
+    {
+      "key": "hudLayout",
+      "label": "Cluster design",
+      "type": "choice",
+      "default": "off",
+      "options": [
+        [
+          "off",
+          "Off (BMW's own cluster)"
+        ],
+        [
+          "our_m4",
+          "F8X"
+        ]
+      ]
+    },
+    {
+      "key": "units",
+      "label": "Temperature units",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Follow car"
+        ],
+        [
+          "metric",
+          "Celsius (\u00b0C)"
+        ],
+        [
+          "us",
+          "Fahrenheit (\u00b0F)"
+        ]
+      ]
+    },
+    {
+      "key": "f8xBacklightColour",
+      "label": "Backlight colour",
+      "type": "choice",
+      "default": "original",
+      "options": [
+        [
+          "original",
+          "Original"
+        ],
+        [
+          "amber",
+          "Amber"
+        ]
+      ]
+    },
+    {
+      "key": "f8xBrakeStyle",
+      "label": "Parking-brake style",
+      "type": "choice",
+      "default": "icon",
+      "options": [
+        [
+          "icon",
+          "EU symbol"
+        ],
+        [
+          "text",
+          "US BRAKE"
+        ]
+      ]
+    },
+    {
+      "key": "f82DistanceUnits",
+      "label": "Speed and distance",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Follow car"
+        ],
+        [
+          "metric",
+          "km/h and km"
+        ],
+        [
+          "us",
+          "mph and mi"
+        ]
+      ]
+    },
+    {
+      "key": "f82DigitalSpeed",
+      "label": "Digital speed",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "f82ShowGearInD",
+      "label": "Gear number in D",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "f82InfoPage",
+      "label": "Information page",
+      "type": "choice",
+      "default": "off",
+      "options": [
+        [
+          "off",
+          "Off"
+        ],
+        [
+          "outsideTemperature",
+          "Outside temperature"
+        ],
+        [
+          "date",
+          "Date"
+        ],
+        [
+          "fuelConsumption",
+          "Average consumption"
+        ],
+        [
+          "rangeRemaining",
+          "Range remaining"
+        ],
+        [
+          "time",
+          "Time"
+        ],
+        [
+          "averageSpeed",
+          "Average speed"
+        ]
+      ]
+    },
+    {
+      "key": "f82Footer",
+      "label": "Mileage / trip row",
+      "type": "choice",
+      "default": "show",
+      "options": [
+        [
+          "off",
+          "Off"
+        ],
+        [
+          "show",
+          "Show"
+        ],
+        [
+          "startup",
+          "Only on startup"
+        ]
+      ]
+    },
+    {
+      "key": "f82DateFormat",
+      "label": "Date format",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Follow car"
+        ],
+        [
+          "DD.MM.YY",
+          "DD.MM.YY"
+        ],
+        [
+          "MM/DD/YY",
+          "MM/DD/YY"
+        ],
+        [
+          "DD.MM.YYYY",
+          "DD.MM.YYYY"
+        ],
+        [
+          "MM/DD/YYYY",
+          "MM/DD/YYYY"
+        ],
+        [
+          "YYYY-MM-DD",
+          "YYYY-MM-DD"
+        ]
+      ]
+    },
+    {
+      "key": "consumptionUnits",
+      "type": "choice",
+      "label": "Fuel economy units",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Follow car"
+        ],
+        [
+          "l/100km",
+          "l/100km"
+        ],
+        [
+          "mpg_uk",
+          "mpg (UK)"
+        ],
+        [
+          "mpg_us",
+          "mpg (US)"
+        ],
+        [
+          "km/l",
+          "km/l"
+        ]
+      ]
+    },
+    {
+      "key": "clockSource",
+      "type": "choice",
+      "label": "Time / date source",
+      "default": "car",
+      "options": [
+        [
+          "car",
+          "Car display"
+        ],
+        [
+          "system",
+          "System clock"
+        ]
+      ]
+    },
+    {
+      "key": "clock",
+      "label": "Clock",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Follow car"
+        ],
+        [
+          "12h",
+          "12-hour"
+        ],
+        [
+          "24h",
+          "24-hour"
+        ]
+      ]
+    },
+    {
+      "key": "timeZone",
+      "label": "Time zone (clock)",
+      "type": "number",
+      "default": -9999,
+      "steps": [
+        -9999,
+        -720,
+        -690,
+        -660,
+        -630,
+        -600,
+        -570,
+        -540,
+        -510,
+        -480,
+        -450,
+        -420,
+        -390,
+        -360,
+        -330,
+        -300,
+        -270,
+        -240,
+        -210,
+        -180,
+        -150,
+        -120,
+        -90,
+        -60,
+        -30,
+        0,
+        30,
+        60,
+        90,
+        120,
+        150,
+        180,
+        210,
+        240,
+        270,
+        300,
+        330,
+        360,
+        390,
+        420,
+        450,
+        480,
+        510,
+        540,
+        570,
+        600,
+        630,
+        660,
+        690,
+        720,
+        750,
+        780,
+        810,
+        840
+      ]
+    },
+    {
+      "key": "tankLitres",
+      "label": "Fuel tank size",
+      "type": "number",
+      "unit": "L",
+      "default": 65,
+      "steps": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110
+      ]
+    },
+    {
+      "key": "f8xLimitSource",
+      "label": "RPM limit source",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Auto (BMW live)"
+        ],
+        [
+          "manual",
+          "Manual"
+        ]
+      ]
+    },
+    {
+      "key": "f82Redline",
+      "label": "Manual engine redline (RPM)",
+      "type": "number",
+      "unit": "rpm",
+      "default": 7200,
+      "steps": [
+        4500,
+        4750,
+        5000,
+        5250,
+        5500,
+        6000,
+        6500,
+        7000,
+        7200,
+        7500,
+        7600,
+        8000,
+        8200,
+        8500
+      ],
+      "when": {
+        "f8xLimitSource": "manual"
+      }
+    },
+    {
+      "key": "shiftBefore",
+      "label": "Shift point before redline",
+      "type": "number",
+      "unit": "rpm",
+      "default": 300,
+      "steps": [
+        0,
+        100,
+        200,
+        300,
+        500,
+        800,
+        1000
+      ]
+    },
+    {
+      "key": "coldGuard",
+      "label": "SIM ONLY: warmup redline",
+      "type": "bool",
+      "default": true,
+      "hidden": true
+    },
+    {
+      "key": "demo",
+      "label": "Demo data",
+      "type": "choice",
+      "default": "off",
+      "options": [
+        [
+          "on",
+          "On (Mac preview only)"
+        ],
+        [
+          "off",
+          "Off"
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "key": "f8xVehicleLayout",
+      "type": "choice",
+      "label": "Vehicle diagram",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Automatic"
+        ],
+        [
+          "two",
+          "2 doors"
+        ],
+        [
+          "four",
+          "4 doors"
+        ]
+      ]
+    },
+    {
+      "key": "f8xSteeringSide",
+      "type": "choice",
+      "label": "Steering position",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Automatic"
+        ],
+        [
+          "lhd",
+          "Left-hand drive"
+        ],
+        [
+          "rhd",
+          "Right-hand drive"
+        ]
+      ]
+    }
+  ]
+}

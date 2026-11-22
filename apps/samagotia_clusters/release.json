@@ -1,0 +1,46 @@
+{
+  "id": "samagotia_clusters",
+  "title": "Samagotia Clusters",
+  "vendor": "Samagotia",
+  "loggingId": "SMGC",
+  "description": "Custom instrument cluster designs for BMW iDrive 7. Includes F8X with live vehicle data and parked-test fallback to the BMW cluster.",
+  "license": "SEE LICENSE IN javascript/NOTICE",
+  "mguHmi": [
+    "ID7"
+  ],
+  "requires": {
+    "cluster-render": "0.5.3"
+  },
+  "layouts": [
+    "our_m4"
+  ],
+  "fonts": [
+    "f82_gear",
+    "f82_info",
+    "f82_speed",
+    "r_label"
+  ],
+  "visibleSettings": [
+    "hudLayout",
+    "units",
+    "f8xBacklightColour",
+    "f8xBrakeStyle",
+    "f82DistanceUnits",
+    "f82DigitalSpeed",
+    "f82ShowGearInD",
+    "f82InfoPage",
+    "f82Footer",
+    "f82DateFormat",
+    "consumptionUnits",
+    "clockSource",
+    "clock",
+    "timeZone",
+    "tankLitres",
+    "f8xLimitSource",
+    "f82Redline",
+    "shiftBefore",
+    "f8xVehicleLayout",
+    "f8xSteeringSide"
+  ],
+  "version": "0.16.0"
+}
