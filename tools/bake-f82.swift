@@ -1121,15 +1121,16 @@ func panelBackground(_ night: Bool) -> CGContext {
             let fade = night ? progress * progress * (3 - 2 * progress)
                 : progress * progress * progress * (progress * (progress * 6 - 15) + 10)
             var opacity = 1 - fade
-            // Keep the existing approximate left telltale row clear. Its exact
-            // G82 mask remains a separate parked validation item.
+            // Preserve the lower-row colour falloff over an opaque black panel.
+            // Never expose the stock gauge/readout artwork through this texture.
             let telltale = exp(-pow((logicalX - 51) / 14, 4))
             let row = max(0, min(1, (logicalY - 60) / 4))
             opacity *= 1 - telltale * row * row * (3 - 2 * row)
-            for channel in 0..<4 {
+            for channel in 0..<3 {
                 let i = (y * width + x) * 4 + channel
                 pixels[i] = UInt8((Double(pixels[i]) * opacity).rounded())
             }
+            pixels[(y * width + x) * 4 + 3] = 255
         }
     }
     if night {
@@ -1701,7 +1702,7 @@ if needleShadowsOnly && !previewsOnly {
     try writeJSON(layout, layoutURL)
 } else if !auxiliaryOnly && !previewsOnly {
 try writeJSON(["schemaVersion": 2, "name": "F8X", "theme": "classic", "widgets": widgets,
-               "_about": "Metric F82 dial-face study traced from the reference photo. Four static faces, four rotated needle sprites and a live gear readout. The lower 74 pixels are transparent."],
+               "_about": "Metric F82 dial-face study traced from the reference photo. Four static faces, four rotated needle sprites and a live gear readout. The full-panel backdrop is opaque; its colour fades smoothly to black."],
               root.appendingPathComponent("apps/samagotia_clusters/cluster/layouts/our_m4.json"))
 }
 for (_, suffix, thumb) in previews {

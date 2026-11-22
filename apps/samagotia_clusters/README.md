@@ -56,3 +56,8 @@ Mac controls are under **Simulated signals → Doors / panels (SIM)**: G82/G80/G
 ## G82 installation compatibility (0.16.1)
 
 Exterior temperature requests notification permission only (`s`). The connected G82's interface catalog exposes `ExteriorTemperature.notifier` with no getter; version 0.16.0 incorrectly requested `rs`, which the Store refused before installing the app. The runtime subscribes without polling. Missing, invalid, unavailable or stale temperature still shows `--`; notification delivery has not yet been verified in our running app. The complete generated manifest is checked locally against the connected head unit's catalog before publication; that catalog is kept private and is not distributed. This validates declared capabilities, not live signal delivery or native warning takeover.
+
+
+## Opaque panel backing (0.16.2)
+
+The Day and Night backgrounds are opaque across the full 1920×720 panel. The painted falloff is composited over black in the asset so it keeps its appearance without exposing the BMW gauges and readouts underneath. The bake tool preserves this opacity. No exclusive layers, renderer ownership, warning-yield or takeover settings are changed. Off, stale speed/RPM, renderer disconnect and app shutdown still remove all our layers so the BMW display can return. Native warning takeover and the visible result still require a parked check on the car; an opaque background alone does not prove BMW warning visibility.

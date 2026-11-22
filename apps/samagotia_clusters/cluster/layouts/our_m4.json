@@ -1,5 +1,5 @@
 {
-  "_about" : "Metric F82 dial-face study traced from the reference photo. Four static faces, four rotated needle sprites and a live gear readout. The lower 74 pixels are transparent.",
+  "_about" : "Metric F82 dial-face study traced from the reference photo. Four static faces, four rotated needle sprites and a live gear readout. The full-panel backdrop is opaque; its colour fades smoothly to black.",
   "name" : "F8X",
   "schemaVersion" : 2,
   "sourceDesign" : "f82",
