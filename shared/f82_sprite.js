@@ -22,6 +22,10 @@ function rpmAngle(curve, rpm, driveReady) {
     return ready + (angle(curve, 1000) - ready) * rpm / 1000;
 }
 
+function isSequential(data, mDriveProgram) {
+    return !!(data && !data.demo && (mDriveProgram ? mDriveProgram === 'S' || mDriveProgram === 'M' : data.program === 'M'));
+}
+
 function gearReadout(data, mDriveProgram, showGearInD) {
     const { stage, gear } = data;
     if (stage === 'P' || stage === 'N' || stage === 'R') return { main: stage, small: '' };
@@ -29,7 +33,7 @@ function gearReadout(data, mDriveProgram, showGearInD) {
     const number = !data.gearGuessed && Number.isInteger(gear) && gear > 0 ? String(gear) : '';
     if (stage !== 'D' && !number) return { main: '-', small: '' };
     // MDrive S is sequential. S from a regular gearbox can be automatic Sport.
-    const sequential = !data.demo && (mDriveProgram ? mDriveProgram === 'S' || mDriveProgram === 'M' : data.program === 'M');
+    const sequential = isSequential(data, mDriveProgram);
     return sequential ? { main: number || '-', small: '' }
         : { main: 'D', small: showGearInD ? number : '' };
 }
@@ -78,6 +82,13 @@ const turnIndicators = [
     { id: 'f82_turn_left', type: 'icon', icon: 'turnLeft', indicator: 'left', x: 818, y: 107, w: 58, h: 56, z: 3, own: true, color: [55, 236, 80, 255] },
     { id: 'f82_turn_right', type: 'icon', icon: 'turnRight', indicator: 'right', x: 1044, y: 107, w: 58, h: 56, z: 3, own: true, color: [55, 236, 80, 255] },
 ];
+
+// Default to BMW's existing telltales. Extra in-panel arrows can duplicate
+// stock-controlled arrows, as seen on the owner's G82.
+// Other installations can explicitly enable the in-panel reference positions.
+function turnIndicatorWidgets(style) {
+    return style === 'f8x' ? turnIndicators.map((w) => Object.assign({}, w, { color: w.color.slice() })) : [];
+}
 
 // The body-light notifications expose either the stalk command or the active function.
 // Enum values verified against the iDrive 7 Cluster Info signal definitions.
@@ -168,8 +179,23 @@ function lightOf(value) {
 function backlightAsset(asset, colour) {
     // Only dial printing has colour variants. Never tint metal, needles,
     // warning lamps, shift lights, shadows or the information display.
-    return colour === 'amber' && /^(speed|rpm|fuel|oil)-face(?:-(mph|diesel|fahrenheit))?(?:-night)?$/.test(asset)
+    return colour === 'amber' && /^(speed|rpm|fuel|oil)-face(?:-(mph|diesel|50-150))?(?:-fahrenheit)?(?:-night)?$/.test(asset)
         ? asset + '-amber' : asset;
+}
+
+// The car supplies the reading and preferred units, not verified gauge limits.
+// A scale choice must replace the printing and Celsius needle calibration together.
+function oilScaleWidgets(widgets, scale, fahrenheit, readAsset) {
+    if (!widgets.some((w) => w.type === 'f82sprite' && w.asset === 'oil-face')) return widgets;
+    const base = scale === '70-170' ? 'oil-face' : 'oil-face-50-150';
+    const asset = base + (fahrenheit ? '-fahrenheit' : '');
+    const curve = readAsset(asset).oilCurve || [[70, -54], [170, 54]];
+    return widgets.map((w) => {
+        if (w.type !== 'f82sprite') return w;
+        if (w.asset === 'oil-face') return Object.assign({}, w, { asset, nightAsset: asset + '-night' });
+        if (w.signal === 'oil') return Object.assign({}, w, { curve });
+        return w;
+    });
 }
 
 function lowerArcOf(layout, readAsset) {
@@ -276,6 +302,6 @@ function shiftTrackOf(face, needle) {
     };
 }
 
-const f82Sprite = { angle, rpmAngle, gearReadout, gearWidget, digitalSpeedWidgets, infoAmbient, infoClock, infoWidgets, validate, lightOf, backlightAsset, lowerArcOf, shadowOf, shadowOffset, shadowOpacity, glassOf, glassPose,
-    infoPage, infoPageOptions, turnIndicators, turnDirection, previewShiftLimit, shiftBand, shiftBuildCount, shiftTrackOf, SHIFT_TRACK_START_RPM, SHIFT_OIL_WARM_C };
+const f82Sprite = { angle, rpmAngle, isSequential, gearReadout, gearWidget, digitalSpeedWidgets, infoAmbient, infoClock, infoWidgets, validate, lightOf, backlightAsset, oilScaleWidgets, lowerArcOf, shadowOf, shadowOffset, shadowOpacity, glassOf, glassPose,
+    infoPage, infoPageOptions, turnIndicators, turnIndicatorWidgets, turnDirection, previewShiftLimit, shiftBand, shiftBuildCount, shiftTrackOf, SHIFT_TRACK_START_RPM, SHIFT_OIL_WARM_C };
 if (typeof module !== 'undefined') module.exports = f82Sprite;

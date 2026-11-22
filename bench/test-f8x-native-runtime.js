@@ -99,135 +99,82 @@ function fixture(backend, environment, light) {
         now: () => now, reset: () => { frames.length = 0; } };
 }
 
-for (const light of ['day', 'night']) {
-    const f = fixture('ramses-test', {}, light);
-    const animatedCount = widgets.filter((w) => shown(w, light)).length;
-    assert(f.runtime._nativeF82Motion());
+// Native GPU drawing uses direct poses. Replacing a Ramses19 animation on
+// every reading rebuilds its shared animation system; this path never does it.
+const expected = (x, values) => x.w.signal === 'rpm'
+    ? sprite.rpmAngle(x.w.curve, values.rpm, false) : sprite.angle(x.w.curve, values[x.w.signal]);
+for (const [backend, environment] of [['ramses-test', {}], ['bench', {}],
+    ['ramses-test', { M4_PREVIEW_ONLY: '1' }]]) for (const light of ['day', 'night']) {
+    const f = fixture(backend, environment, light);
+    f.reset(); f.sample(100, changed);
+    assert(f.timers.size > 0, 'moving resident needles schedule short pose interpolation');
+    f.advance(117); f.companions();
+    const rpm = f.runtime.f82Needles.find((x) => x.w.id === 'rpm_needle');
+    const before = f.client.layers.get(rpm.ref).opts.rotate;
+    assert(before > expected(rpm, initial) && before < expected(rpm, changed), 'first frame moves toward the measured target');
+    f.feed(120, reversed); f.advance(134); f.companions();
+    const turning = f.client.layers.get(rpm.ref).opts.rotate;
+    assert(turning >= before && turning <= expected(rpm, changed), 'retarget starts at the current angle without jumping');
+    f.advance(151); f.companions();
+    const after = f.client.layers.get(rpm.ref).opts.rotate;
+    assert(after < turning && after >= expected(rpm, reversed), 'reversal follows the newest reading without overshoot');
+    f.advance(400); f.companions();
     for (const x of f.runtime.f82Needles) {
-        if (!shown(x.w, light)) {
-            assert.equal(f.client.layers.get(x.ref).opts.visible, false);
-            continue;
-        }
-        const angle = x.w.signal === 'rpm' ? sprite.rpmAngle(x.w.curve, initial.rpm, false)
-            : sprite.angle(x.w.curve, initial[x.w.signal]);
-        near(f.client.layers.get(x.ref).opts.rotate, angle, 'initial sample snaps ' + light + ' ' + x.w.id);
-        assert.equal(f.client.layers.get(x.ref).anims.size, 0);
-    }
-    f.reset();
-    const firstAt = f.sample(140, changed);
-    assert.equal(f.timers.size, 0, 'native interpolation schedules no JS follow-up frame');
-    let anims = f.messages().filter((m) => m.op === 'animate');
-    assert.equal(anims.length, animatedCount);
-    f.companions();
-    const original = new Map(anims.map((m) => [m.ref, m]));
-    f.reset();
-    const reversedAt = f.sample(190, reversed);
-    assert.equal(reversedAt - firstAt, 100, 'new native targets are capped at 10 Hz');
-    anims = f.messages().filter((m) => m.op === 'animate');
-    assert.equal(anims.length, animatedCount);
-    for (const m of anims) {
-        const previous = original.get(m.ref), keys = previous.keys.split(' ').map((k) => k.split(':').map(Number));
-        assert(reversedAt - firstAt < keys[1][0], 'the retarget occurs before the preceding segment ends');
-        const expected = keys[0][1] + (keys[1][1] - keys[0][1]) * (reversedAt - firstAt) / keys[1][0];
-        near(Number(m.keys.split(' ')[0].split(':')[1]), expected, 'mid-motion reversal is continuous');
-        assert.equal(m.anim, previous.anim, 'retargeting reuses the layer-local animation ID');
-    }
-    f.companions();
-    f.reset(); f.sample(f.now() + 100, reversed);
-    assert.equal(f.frames.length, 0, 'settled repeated targets send no commands');
-    assert.equal(f.timers.size, 0);
-    for (let i = 0; i < 40; i++) {
-        f.sample(f.now() + 100, i % 2 ? changed : reversed);
-        for (const layer of f.client.layers.values()) assert(layer.anims.size <= 1, 'animation cache stays bounded');
-    }
-    f.companions();
-    f.reset(); f.sample(f.now() + 100, { speed: null, rpm: null, fuel: null, oil: null });
-    const invalid = f.messages();
-    assert.equal(invalid.filter((m) => m.op === 'stop').length, animatedCount);
-    for (const layer of f.client.layers.values()) {
-        assert.equal(layer.opts.visible, false, 'invalid input hides the needle and companions');
-        assert.equal(layer.anims.size, 0, 'invalid input cancels native movement');
-    }
-    f.reset(); f.sample(f.now() + 100, initial);
-    assert(!f.messages().some((m) => m.op === 'animate'), 'fresh recovery snaps without catch-up animation');
-    for (const x of f.runtime.f82Needles) {
-        if (!shown(x.w, light)) {
-            assert.equal(f.client.layers.get(x.ref).opts.visible, false);
-            continue;
-        }
-        const angle = x.w.signal === 'rpm' ? sprite.rpmAngle(x.w.curve, initial.rpm, false)
-            : sprite.angle(x.w.curve, initial[x.w.signal]);
-        assert.equal(f.client.layers.get(x.ref).opts.visible, true);
-        near(f.client.layers.get(x.ref).opts.rotate, angle, 'recovery snaps to the fresh angle');
-    }
-    f.companions();
-    f.reset(); f.sample(f.now() + 100, Object.assign({}, initial, { speed: 0.01 }));
-    assert.equal(f.frames.length, 0, 'sub-0.1-degree target jitter does not restart native movement');
-}
-
-{
-    const f = fixture('ramses-test', {}, 'day');
-    f.sample(140, changed);
-    f.runtime._statusSoon = () => {}; // status UI scheduling is unrelated to animation refusal
-    f.runtime._wireClientEvents(f.client, 0);
-    f.reset();
-    f.client.emit('refused', 'animate', f.runtime.f82Needles[0].ref, 'animation unsupported');
-    assert.equal(f.runtime._nativeF82Motion(), false, 'asynchronous refusal disables native motion for this connection');
-    assert(f.warnings.some((message) => /native needle animation refused/.test(message)));
-    for (const x of f.runtime.f82Needles) {
-        const expected = x.w.signal === 'rpm' ? sprite.rpmAngle(x.w.curve, changed.rpm, false)
-            : sprite.angle(x.w.curve, changed[x.w.signal]);
         const layer = f.client.layers.get(x.ref);
-        assert.equal(layer.anims.size, 0, 'refusal cancels every native track');
-        near(layer.opts.rotate, expected, 'refused movement snaps to the latest target, never its old FROM angle');
+        assert.equal(layer.anims.size, 0, 'no native animation replacement or accumulating animation IDs');
+        if (shown(x.w, light)) near(layer.opts.rotate, expected(x, reversed), 'all dials settle to real targets');
     }
-    f.reset(); f.sample(240, reversed); f.advance(450);
-    assert(f.messages().every((m) => m.op === 'set'), 'subsequent direct motion does not retry refused animations');
-    for (const x of f.runtime.f82Needles) {
-        const expected = x.w.signal === 'rpm' ? sprite.rpmAngle(x.w.curve, reversed.rpm, false)
-            : sprite.angle(x.w.curve, reversed[x.w.signal]);
-        near(f.client.layers.get(x.ref).opts.rotate, expected, 'direct fallback follows subsequent fresh data');
+    assert(f.messages().every((m) => m.op === 'set'), 'motion sends only pose commands, never pixels or animations');
+    assert.equal(f.timers.size, 0, 'settled interpolation stops scheduling frames');
+    f.reset(); f.sample(500, reversed); f.advance(600);
+    assert.equal(f.frames.length, 0, 'stationary readings send no commands');
+    f.sample(700, { speed: null, rpm: null, fuel: null, oil: null });
+    assert.equal(f.timers.size, 0, 'invalid data immediately stops motion');
+    for (const layer of f.client.layers.values()) assert.equal(layer.opts.visible, false);
+    f.sample(800, initial); f.companions();
+    for (const x of f.runtime.f82Needles) if (shown(x.w, light)) {
+        near(f.client.layers.get(x.ref).opts.rotate, expected(x, initial), 'fresh recovery snaps without stale catch-up');
     }
-    f.companions();
 }
 
 for (const blockBeforeCallback of [false, true]) {
     const f = fixture('ramses-test', {}, 'day');
+    f.runtime._wireClientEvents(f.client, 0);
     f.reset();
     if (blockBeforeCallback) f.feed(100, changed);
     f.client.blocked = true;
     if (blockBeforeCallback) f.advance(100);
     for (let i = 0; i < 20; i++) f.feed(200 + i * 50, i % 2 ? reversed : changed);
-    assert.equal(f.frames.length, 0, 'a blocked native socket receives no pose/animation messages');
-    assert.equal(f.timers.size, 0, 'blocked targets schedule no interpolation work');
-    assert.equal(f.client.pendingSets.size, 0, 'blocked updates leave no stale intermediate pose queue');
-    f.client.blocked = false;
-    f.runtime._queueF82(); f.advance(f.now());
-    const anims = f.messages().filter((m) => m.op === 'animate');
-    assert.equal(anims.length, widgets.length, 'unblocking draws the latest available target');
-    for (const m of anims) {
-        const x = f.runtime.f82Needles.find((x) => x.ref === m.ref);
-        const value = x.w.signal === 'rpm' ? sprite.rpmAngle(x.w.curve, reversed.rpm, false)
-            : sprite.angle(x.w.curve, reversed[x.w.signal]);
-        const start = x.w.signal === 'rpm' ? sprite.rpmAngle(x.w.curve, initial.rpm, false)
-            : sprite.angle(x.w.curve, initial[x.w.signal]);
-        const keys = m.keys.split(' ').map((k) => k.split(':').map(Number));
-        near(keys[0][1], start, 'unblocking starts from the last actually drawn target');
-        near(keys[1][1], Math.round(value * 10) / 10, 'unblocking uses the newest raw target, not an intermediate sample');
-        assert(keys[1][0] >= motion.NATIVE_MIN_MS && keys[1][0] <= motion.NATIVE_MAX_MS,
-            'unblocked native segment remains bounded');
+    assert.equal(f.frames.length, 0, 'blocked socket receives no needle work');
+    assert.equal(f.timers.size, 0, 'blocked motion schedules no interpolation work');
+    assert.equal(f.client.pendingSets.size, 0, 'no stale intermediate poses queue while blocked');
+    f.client.blocked = false; f.client.emit('drained'); f.advance(f.now());
+    for (const x of f.runtime.f82Needles) {
+        near(f.client.layers.get(x.ref).opts.rotate, expected(x, reversed), 'drain draws the newest value without catch-up');
     }
-    assert.equal(f.timers.size, 0, 'unblocked interpolation stays native');
+    assert.equal(f.timers.size, 0, 'recovery to the latest value creates no old animation work');
     f.companions();
 }
 
-for (const [backend, env] of [['bench', {}], ['ramses-test', { M4_PREVIEW_ONLY: '1' }]]) {
-    const f = fixture(backend, env, 'day');
-    assert.equal(f.runtime._nativeF82Motion(), false, 'bench/preview remains on its own interpolation path');
-    f.reset(); f.sample(100, changed);
-    assert(f.timers.size > 0, 'preview still schedules JS interpolation');
-    f.advance(350); f.companions();
-    assert(f.messages().every((m) => m.op === 'set'), 'preview never emits native animation messages');
-    assert.equal(f.timers.size, 0, 'settled preview motion becomes idle');
+// Exercise the real socket callback, including a pump that fills the socket again.
+{
+    const net = require('net'), { EventEmitter } = require('events');
+    const originalConnect = net.connect;
+    const socket = new EventEmitter();
+    let accept = false, drains = 0;
+    socket.write = () => accept; socket.destroy = () => {};
+    const client = new ClusterRender('drain-test', '/tmp/no-car');
+    const ref = client.image({ target: 'panel', w: 8, h: 8 });
+    client.closed = false;
+    try { net.connect = () => socket; client._open(); } finally { net.connect = originalConnect; }
+    client.ready = client.connected = true; client.blocked = true;
+    client.on('drained', () => drains++);
+    client.set(ref, { rotate: 10 }); socket.emit('drain');
+    assert.equal(drains, 0, 'a pump that blocks again must not announce capacity');
+    assert.equal(client.blocked, true);
+    accept = true; socket.emit('drain');
+    assert.equal(drains, 1, 'actual socket capacity event reaches the runtime immediately');
+    client.sock = {}; socket.emit('drain');
+    assert.equal(drains, 1, 'late drain from an obsolete socket is ignored');
 }
-console.log('F8X native runtime: actual layout/client, coherent companion animations, continuous reversals, bounded IDs, no interpolation timers/pixel uploads, invalid recovery, asynchronous-refusal fallback, backpressure recovery and preview isolation passed.');
+console.log('F8X GPU motion: resident poses, coherent companions, short continuous reversals, idle silence, invalid recovery, zero animation rebuilds/pixel uploads and real drain/backpressure recovery passed.');

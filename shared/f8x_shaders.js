@@ -123,4 +123,5 @@ void main() {
 }
 `;
 
-module.exports = { atext: ATEXT, f82shift: F82SHIFT, f8xarc: F8XARC };
+module.exports = { atext: ATEXT, f82shift: F82SHIFT, f8xarc: F8XARC,
+    f8xpanel: require('./f8x_panel_backing').FS };

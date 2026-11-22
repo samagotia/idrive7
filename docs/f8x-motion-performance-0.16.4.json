@@ -1,0 +1,133 @@
+{
+  "scope": "Deterministic actual-runtime command simulation with ideal renderer; not a car FPS/latency measurement.",
+  "baselineCommit": "5ab163dd3962fd767236a50e49d1345f43f39d00",
+  "currentSources": {
+    "shared/f8x_runtime.js": "728b6db4b0572f2b8e9147ac39cd3325e172facccd9da29bbf84bf6ddf3fd1e5",
+    "shared/f8x_motion.js": "e37b628b140414f6f2b8a0160f40a792e13f1399c58db65a399a727f3e325323",
+    "shared/f8x_vehicle.js": "ae5b13b1b4591bf64b5d1d776b26279d7cee4b36d60972fb49cb161371a6047e",
+    "shared/f82_sprite.js": "b3fb52c1a8a610c06547369b4959903c2f4363482a13aa69da5df930fec8672e",
+    "shared/cluster_render_client.js": "93b47f2952c6154f7895254d819b4cf9b4e573a8ce98672de033bf2e35b352f6"
+  },
+  "assumptions": [
+    "Ramp rises at 2000 RPM/s; observations use milliseconds 500–2500.",
+    "Native baseline animations are rendered ideally at command arrival; real transport and flush delays are excluded.",
+    "Source cadence is supplied, not measured. 500ms models getter-only baseline; notifications could already be faster.",
+    "The 25ms source case assumes a genuinely new source value each read. The cached case repeats values between 50ms source updates.",
+    "A 50ms runtime housekeeping tick remains active; only the Day RPM needle and shadow change in this trace.",
+    "Pose command batches per second are software output cadence, not physical display FPS."
+  ],
+  "baseline20HzSource": {
+    "readPeriodMs": 50,
+    "sourcePeriodMs": 50,
+    "meanTrackingLagMs": 149.21,
+    "p95TrackingLagMs": 150,
+    "maxTrackingLagMs": 150.94,
+    "commandsPerSecond": 40,
+    "KiBPerSecond": 3.45,
+    "animateCommands": 60,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 10,
+      "minIntervalMs": 100,
+      "medianIntervalMs": 100,
+      "p95IntervalMs": 100
+    }
+  },
+  "baselineGetterOnly2HzSource": {
+    "readPeriodMs": 500,
+    "sourcePeriodMs": 500,
+    "meanTrackingLagMs": 410.04,
+    "p95TrackingLagMs": 581,
+    "maxTrackingLagMs": 600,
+    "commandsPerSecond": 6.67,
+    "KiBPerSecond": 0.57,
+    "animateCommands": 10,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 1.67,
+      "minIntervalMs": 500,
+      "medianIntervalMs": 500,
+      "p95IntervalMs": 500
+    }
+  },
+  "candidate20HzSource": {
+    "readPeriodMs": 50,
+    "sourcePeriodMs": 50,
+    "meanTrackingLagMs": 57.61,
+    "p95TrackingLagMs": 77,
+    "maxTrackingLagMs": 83,
+    "commandsPerSecond": 116,
+    "KiBPerSecond": 7.64,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 58,
+      "minIntervalMs": 16,
+      "medianIntervalMs": 17,
+      "p95IntervalMs": 17
+    }
+  },
+  "hypotheticalCandidate40HzSource": {
+    "readPeriodMs": 25,
+    "sourcePeriodMs": 25,
+    "meanTrackingLagMs": 46.29,
+    "p95TrackingLagMs": 57.47,
+    "maxTrackingLagMs": 62.26,
+    "commandsPerSecond": 119.33,
+    "KiBPerSecond": 7.89,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 59.67,
+      "minIntervalMs": 16,
+      "medianIntervalMs": 17,
+      "p95IntervalMs": 17
+    }
+  },
+  "candidate40HzReadsWith20HzCachedSource": {
+    "readPeriodMs": 25,
+    "sourcePeriodMs": 50,
+    "meanTrackingLagMs": 57.61,
+    "p95TrackingLagMs": 77,
+    "maxTrackingLagMs": 83,
+    "commandsPerSecond": 116,
+    "KiBPerSecond": 7.64,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 58,
+      "minIntervalMs": 16,
+      "medianIntervalMs": 17,
+      "p95IntervalMs": 17
+    }
+  },
+  "meanLagReductionWithSameSourcePercent": 61.39,
+  "baselineFunctional": {
+    "reversalBounded": true,
+    "withheldSampleHoldsLastValue": true,
+    "settledSilence": true,
+    "invalidHidden": true,
+    "recoveryUsesFreshValue": true,
+    "noBitmapOrMeshWrites": true
+  },
+  "candidateFunctional": {
+    "reversalBounded": true,
+    "withheldSampleHoldsLastValue": true,
+    "settledSilence": true,
+    "invalidHidden": true,
+    "recoveryUsesFreshValue": true,
+    "noBitmapOrMeshWrites": true
+  },
+  "candidateBackpressure": {
+    "blockedDurationMs": 410,
+    "socketMessagesWhileBlocked": 0,
+    "recoveredLatestValue": true
+  },
+  "candidateEventLoopStall": {
+    "durationMs": 490,
+    "commandsOnResume": 2,
+    "missedFrameBacklog": false,
+    "timerCountBound": 1,
+    "recoveredLatestValue": true
+  }
+}

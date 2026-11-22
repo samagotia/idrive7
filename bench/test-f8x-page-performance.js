@@ -7,7 +7,7 @@ const vm = require('vm');
 const source = path.resolve(__dirname, '../shared/f8x_page.js');
 let now = 1000, canvases = 0, images = 0, kicks = 0, tick;
 let settingsChanged, layoutChanged, statusChanged;
-let info = 'range live', doors = 'doors closed', details = 'limit age 0s';
+let info = 'range live', doors = 'doors closed', details = 'limit age 0s', oilScale = 'Auto G82: 50–150 °C';
 const targets = new Map();
 const values = { hudLayout: 'off', units: 'metric', f8xLimitSource: 'auto', clockSource: 'car', f82InfoPage: 'off' };
 const schema = (key) => ({ key, label: key, type: 'choice', options: key === 'hudLayout'
@@ -27,7 +27,7 @@ const ctx = {
 const runtime = { activeName: 'off', lastStatus: 'BMW cluster',
     setting: (key) => values[key], onStatus(fn) { statusChanged = fn; },
     rpmLimitStatus: () => 'BMW live max RPM: 7200 rpm',
-    rpmLimitDetails: () => details, infoStatus: () => info, doorStatusText: () => doors,
+    rpmLimitDetails: () => details, infoStatus: () => info, doorStatusText: () => doors, oilScaleStatus: () => oilScale,
 };
 const moduleUnderTest = { exports: {} };
 vm.runInNewContext(fs.readFileSync(source, 'utf8'), {
@@ -68,6 +68,8 @@ const next = async (ms) => { now += ms; await tick(); };
     now -= 2000; await tick();
     details = 'limit age 2s'; await next(1000);
     assert.equal(canvases, settingsPaints + 3, 'clock rollback cannot freeze later updates');
+    const beforeModelLoss = canvases; oilScale = 'Fallback: 50–150 °C';
+    await next(1000); assert.equal(canvases, beforeModelLoss + 1, 'oil-scale source changes repaint even when the scale values stay the same');
     assert.equal(images, canvases); assert(kicks >= 6);
     console.log('F8X settings performance: unchanged 60 Hz callbacks skip canvas recording, live diagnostics refresh at 1 Hz, and settings/status/layout/tab events repaint immediately.');
 })().catch((error) => { console.error(error.stack); process.exitCode = 1; });

@@ -178,14 +178,26 @@ async function run() {
         await until(ready, 'both zero values confirmed by getters');
         select();
         assert(active());
+        const underlay = Array.from(hud.widgets.values()).find((x) => x.w.type === 'f8xpanel');
+        assert(underlay, 'F8X includes an opaque floor before background image upload');
+        const underlayLayer = underlay.c.layers.get(underlay.ref);
+        assert.equal(underlayLayer.kind, 'effect', 'the opaque floor requires no image upload');
+        assert.deepEqual([underlayLayer.opts.x, underlayLayer.opts.y, underlayLayer.opts.w, underlayLayer.opts.h], [0, 0, 1920, 720]);
+        assert.equal(underlayLayer.opts.klass, 'ambient');
+        assert.equal(underlayLayer.opts.z, -1);
+        assert(!underlayLayer.opts.exclusive, 'native BMW warnings retain priority');
         await delay(1650);
         assert(active(), 'quiet but readable zero values keep F8X active');
         assert.equal(hud.car.data().demo, false);
         if (process.env.F8X_TEST_BACKEND) {
+            const needle = hud.f82Needles.find((x) => x.w.id === 'rpm_needle');
+            const before = hud.client.layers.get(needle.ref).opts.rotate;
             rpm.set(4000);
-            await until(() => hud.client.layers && Array.from(hud.client.layers.values())
-                .some((layer) => layer.anims.size > 0), 'native RPM animation active');
-            assert(hud._nativeF82Motion(), 'the native branch is exercised before dropout tests');
+            await until(() => hud.client.layers.get(needle.ref).opts.rotate !== before,
+                'native GPU RPM pose responds before dropout tests');
+            assert(hud.f82Motion.size > 0, 'short resident-pose motion is exercised');
+            assert(Array.from(hud.client.layers.values()).every((layer) => layer.anims.size === 0),
+                'needle movement avoids native animation-system replacements');
         }
 
         for (const [key, source] of [['speed', speed], ['RPM', rpm]]) {

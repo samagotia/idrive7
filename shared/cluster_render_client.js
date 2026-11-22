@@ -175,7 +175,11 @@ class ClusterRender extends EventEmitter {
         /* A socket close() let go is not this.sock any more: its late events
          * are ignored. */
         sock.on('data', (d) => { if (this.sock === sock) this._data(d); });
-        sock.on('drain', () => { if (this.sock === sock) { this.blocked = false; this._pump(); } });
+        sock.on('drain', () => {
+            if (this.sock !== sock) return;
+            this.blocked = false; this._pump();
+            if (!this.blocked) this.emit('drained');
+        });
         sock.on('error', () => {});
         sock.on('close', () => {
             if (this.sock !== sock) return;

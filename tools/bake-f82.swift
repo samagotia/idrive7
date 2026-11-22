@@ -56,6 +56,13 @@ let oil = Dial(id: "oil", center: CGPoint(x: 1668, y: 535), size: 214, pivotY: 1
 let oilFahrenheit = Dial(id: oil.id, center: oil.center, size: oil.size, pivotY: oil.pivotY,
                          curve: [[160, -54], [340, 54]], labels: [(160, "160"), (250, "250"), (340, "340")],
                          step: 22.5, unit: "°F", signal: oil.signal)
+let oil50 = Dial(id: oil.id, center: oil.center, size: oil.size, pivotY: oil.pivotY,
+                 curve: [[50, -54], [150, 54]], labels: [(50, "50"), (100, "100"), (150, "150")],
+                 step: oil.step, unit: oil.unit, signal: oil.signal)
+let oil50Fahrenheit = Dial(id: oil.id, center: oil.center, size: oil.size, pivotY: oil.pivotY,
+                           curve: [[122, -54], [302, 54]], labels: [(122, "122"), (212, "212"), (302, "302")],
+                           step: oilFahrenheit.step, unit: oilFahrenheit.unit, signal: oil.signal)
+let oilScaleVariants: [(Dial, String)] = [(oil50, "oil-face-50-150"), (oil50Fahrenheit, "oil-face-50-150-fahrenheit")]
 let dials = [speed, rpm, fuel, oil]
 let space = CGColorSpace(name: CGColorSpace.sRGB)!
 let ivory = color(205, 211, 219)
@@ -1252,10 +1259,10 @@ if CommandLine.arguments.contains("--info-font-only") {
 // Derive optional amber faces from the saved Original images. Only the
 // premultiplied contribution of the printing changes; all material pixels,
 // shadows, rims, hubs, badge and alpha remain identical to the saved artwork.
-func bakeAmberFaces() throws {
-    let variants: [(Dial, String)] = [(speed, "speed-face"), (speedMph, "speed-face-mph"),
+func bakeAmberFaces(_ only: [(Dial, String)]? = nil) throws {
+    let variants: [(Dial, String)] = only ?? ([(speed, "speed-face"), (speedMph, "speed-face-mph"),
         (rpm, "rpm-face"), (dieselRpm, "rpm-face-diesel"), (fuel, "fuel-face"),
-        (oil, "oil-face"), (oilFahrenheit, "oil-face-fahrenheit")]
+        (oil, "oil-face"), (oilFahrenheit, "oil-face-fahrenheit")] + oilScaleVariants)
     for (d, asset) in variants {
         let scale = d.small ? auxiliaryDialScale : mainDialScale
         let padding = d.small ? (12.0, 7.0) : (20.0, 8.0)
@@ -1285,6 +1292,49 @@ func bakeAmberFaces() throws {
             try writeJSON(image, assetDir.appendingPathComponent(id + "-amber.json"))
         }
     }
+}
+
+// Use the rendered label difference to retain the saved metal, shadows and hub
+// pixel-for-pixel. Both unit variants keep their calibration in Celsius.
+func bakeOilScaleFaces() throws {
+    for (index, variant) in oilScaleVariants.enumerated() {
+        let (dial, asset) = variant
+        let originalDial = index == 0 ? oil : oilFahrenheit
+        let originalAsset = index == 0 ? "oil-face" : "oil-face-fahrenheit"
+        for night in [false, true] {
+            let suffix = night ? "-night" : ""
+            var image = try JSONSerialization.jsonObject(with: Data(contentsOf: assetDir.appendingPathComponent(originalAsset + suffix + ".json"))) as! [String: Any]
+            let w = image["w"] as! Int, h = image["h"] as! Int
+            var renders: [[UInt8]] = []
+            for d in [originalDial, dial] {
+                let c = bitmap(w, h)
+                c.translateBy(x: 12, y: 7)
+                c.scaleBy(x: auxiliaryDialScale, y: auxiliaryDialScale)
+                paintFace(c, d, night: night)
+                renders.append([UInt8](straightRGBA(c)))
+            }
+            var result = [UInt8](Data(base64Encoded: image["rgba"] as! String)!)
+            for i in stride(from: 0, to: result.count, by: 4) {
+                precondition(renders[0][i + 3] == renders[1][i + 3], "Scale labels must preserve coverage")
+                for channel in 0...2 {
+                    let delta = Int(renders[1][i + channel]) - Int(renders[0][i + channel])
+                    result[i + channel] = UInt8(max(0, min(255, Int(result[i + channel]) + delta)))
+                }
+            }
+            image["rgba"] = Data(result).base64EncodedString()
+            image["oilCurve"] = oil50.curve
+            image["temperatureLabels"] = dial.labels.map { $0.0 }
+            image["temperatureUnit"] = dial.unit
+            try writeJSON(image, assetDir.appendingPathComponent(asset + suffix + ".json"))
+        }
+    }
+}
+
+if CommandLine.arguments.contains("--oil-scale-faces-only") {
+    try bakeOilScaleFaces()
+    try bakeAmberFaces(oilScaleVariants)
+    print("Baked 50–150 °C oil scale and equivalent Fahrenheit faces; existing artwork and layout preserved")
+    exit(0)
 }
 
 // Apply only a metal-surface colour delta to saved Original Day faces. The
@@ -1710,7 +1760,10 @@ for (_, suffix, thumb) in previews {
     let png = NSBitmapImageRep(cgImage: thumb.makeImage()!).representation(using: .png, properties: [:])!
     try png.write(to: root.appendingPathComponent("docs/images/cluster-f82" + suffix + ".png"), options: .atomic)
 }
-if !needleShadowsOnly { try bakeAmberFaces() }
+if !needleShadowsOnly {
+    try bakeOilScaleFaces()
+    try bakeAmberFaces()
+}
 print(previewsOnly ? "Updated Day and Night static previews from saved faces; assets and layout preserved"
       : needleShadowsOnly ? "Updated Day needle shadow assets, references and Day static preview only; other artwork preserved"
       : auxiliaryOnly ? "Updated auxiliary faces/needles and static previews; main artwork, fonts and layout preserved"

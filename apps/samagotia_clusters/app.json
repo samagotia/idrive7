@@ -4,10 +4,13 @@
   "description": "Custom instrument cluster designs for BMW iDrive 7. Includes F8X with live vehicle data and parked-test fallback to the BMW cluster.",
   "vendor": "Samagotia",
   "loggingId": "SMGC",
-  "version": "0.16.3",
+  "version": "0.16.4",
   "iconGlyph": "SMG",
   "shared": [
     "f8x_runtime.js",
+    "f8x_panel_backing.js",
+    "f8x_gear_recommendation.js",
+    "f8x_gear_recommendation_art.js",
     "f8x_motion.js",
     "f8x_page.js",
     "f8x_vehicle.js",
@@ -30,16 +33,19 @@
     "f8x_info_format.js",
     "f8x_doors.js",
     "f8x_door_art.js",
-    "f8x_warning.js"
+    "f8x_warning.js",
+    "f8x_engine_profile.js"
   ],
   "signals": {
     "de.bmw.infotainment.vehicle.CDS": {
       "statusEngineSpeed2": "rs",
       "statusEngineTemperature": "rs",
+      "statusGearIndicator": "rs",
       "statusHandBrake": "rs"
     },
     "de.bmw.infotainment.vehicle.Vehicle2": {
       "statusCarSpeed2": "rs",
+      "statusStandstillFunctions": "rs",
       "statusVehiclePartType": "rs"
     },
     "de.bmw.infrastructure.VehicleCondition": {
@@ -156,6 +162,26 @@
       ]
     },
     {
+      "key": "f8xOilScale",
+      "label": "Oil temperature scale",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Auto (vehicle model)"
+        ],
+        [
+          "50-150",
+          "50–100–150 °C"
+        ],
+        [
+          "70-170",
+          "70–120–170 °C"
+        ]
+      ]
+    },
+    {
       "key": "f8xBacklightColour",
       "label": "Backlight colour",
       "type": "choice",
@@ -168,6 +194,22 @@
         [
           "amber",
           "Amber"
+        ]
+      ]
+    },
+    {
+      "key": "f8xTurnIndicators",
+      "label": "Turn indicators",
+      "type": "choice",
+      "default": "stock",
+      "options": [
+        [
+          "stock",
+          "BMW indicators"
+        ],
+        [
+          "f8x",
+          "F8X indicators"
         ]
       ]
     },
@@ -531,7 +573,7 @@
       "options": [
         [
           "auto",
-          "Auto (BMW live)"
+          "Auto (BMW signal, experimental)"
         ],
         [
           "manual",

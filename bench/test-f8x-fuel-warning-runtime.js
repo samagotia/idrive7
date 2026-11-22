@@ -32,10 +32,13 @@ const ctx = { spec: { config: {} }, log, settings: { get: () => 'off' }, signals
 } };
 const state = Object.assign(Object.create(Runtime.prototype), { ctx, log, kombiAvailable: false, fuelWarningSample: null,
     setting: () => 7200, _watchF82Turns() {}, _queueF82() {},
+    // The full runtime constructs this reader before installing MDrive hooks.
+    // Fuel tests stub its independent presentation while preserving that contract.
+    gearRecommendation: { setProgramAvailability() {}, setProgram() {} },
     fuelWarningState: Runtime.prototype.fuelWarningState, _blitDiff() {} });
 (async () => {
     Runtime.prototype._setupVehicleData.call(state);
-    await Promise.resolve(); await Promise.resolve();
+    await new Promise((resolve) => setImmediate(resolve));
     const kombi = subscriptions.get('de.bmw.infotainment.KombiIF');
     const receive = kombi.handlers.statusRangeTankStatus;
     const send = (reserve, range) => receive({ statusFluidLevelFuelTankSpare: reserve, range, fluidLevelFuelTank: 4 });
@@ -82,5 +85,7 @@ const state = Object.assign(Object.create(Runtime.prototype), { ctx, log, kombiA
     await sub.shutdown(); hu.feed('test', 'field', 5);
     assert.deepEqual(samples, [1, 2, 4]);
     assert.deepEqual(availability, [true, false, true, false]);
+    // Let availability/teardown chains finish before reporting a successful run.
+    await new Promise((resolve) => setImmediate(resolve));
     console.log('F8X fuel warning runtime: existing live stream, priority, inclusive 50 km fallback, zero range, provider loss/reconnect, monotonic expiry and pose-only cached visibility passed.');
 })().catch((error) => { console.error(error); process.exitCode = 1; });

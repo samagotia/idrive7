@@ -83,6 +83,7 @@ function attentionExclamation(x, y) {
 }
 
 const ICONS = { turnLeft: (x, y) => turnArrow(1 - x, y), turnRight: turnArrow, parkingBrake, cruise, cruiseMarker,
+    shiftUp: (x, y) => turnArrow(1 - y, x), shiftDown: (x, y) => turnArrow(y, x),
     fuelReservePump, attentionTriangle };
 
 function paintIcon(name, w, h, color) {

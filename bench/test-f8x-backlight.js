@@ -19,7 +19,7 @@ vm.runInNewContext(fs.readFileSync(path.join(root, 'shared/f8x_runtime.js'), 'ut
 const paint = runtimeModule.exports.prototype._paintF82;
 const load = (id) => JSON.parse(fs.readFileSync(path.join(assets, id + '.json')));
 const faces = ['speed-face', 'speed-face-mph', 'rpm-face', 'rpm-face-diesel',
-    'fuel-face', 'oil-face', 'oil-face-fahrenheit'];
+    'fuel-face', 'oil-face', 'oil-face-fahrenheit', 'oil-face-50-150', 'oil-face-50-150-fahrenheit'];
 for (const face of faces) for (const light of ['day', 'night']) {
     const id = face + (light === 'night' ? '-night' : '');
     const original = load(id), amber = load(id + '-amber');
@@ -53,4 +53,4 @@ for (const face of faces) for (const light of ['day', 'night']) {
 for (const id of ['background', 'background-night', 'fuel-needle-v2', 'rpm-needle-v2-shadow-day', 'oil-needle-v2-glass-night']) {
     assert.equal(sprite.backlightAsset(id, 'amber'), id, 'unrelated images are never tinted');
 }
-console.log('F8X backlight: defaults, all 14 Day/Night/unit/engine variants, exact Original restoration, preserved hubs/coverage and isolated dial printing passed.');
+console.log('F8X backlight: defaults, all Day/Night/unit/engine/oil-scale variants, exact Original restoration, preserved hubs/coverage and isolated dial printing passed.');

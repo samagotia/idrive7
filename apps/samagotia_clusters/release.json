@@ -23,8 +23,10 @@
   "visibleSettings": [
     "hudLayout",
     "units",
+    "f8xOilScale",
     "f8xBacklightColour",
     "f8xBrakeStyle",
+    "f8xTurnIndicators",
     "f82DistanceUnits",
     "f82DigitalSpeed",
     "f82ShowGearInD",
@@ -42,5 +44,5 @@
     "f8xVehicleLayout",
     "f8xSteeringSide"
   ],
-  "version": "0.16.3"
+  "version": "0.16.4"
 }

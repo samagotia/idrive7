@@ -151,8 +151,11 @@ class Car {
         }));
         Object.keys(watches).forEach((iface) => {
             const essential = parkedTest && CRITICAL.find((key) => SIGNALS[key][0] === iface);
-            // Successful getters confirm quiet, valid stationary zeros as fresh readings.
-            const options = essential ? { pollMs: 500, pollFields: [SIGNALS[essential][1]], readTimeoutMs: 500 }
+            // RPM needs responsive reads when the provider's notifications are
+            // sparse. Poll only that field; speed retains its parked heartbeat.
+            // signals.watch permits one pending getter and lets newer notices win.
+            const options = essential ? { pollMs: essential === 'rpm' ? 50 : 500,
+                pollFields: [SIGNALS[essential][1]], readTimeoutMs: 500 }
                 : pollMs[iface] ? { pollMs: pollMs[iface] } : undefined;
             ctx.signals.watch(iface, '1', watches[iface], this.log, options).then((sub) => {
                 if (this.stopped) {

@@ -10,7 +10,7 @@ const environment = {};
 const runtimeModule = { exports: {} };
 vm.runInNewContext(fs.readFileSync(path.join(root, 'shared/f8x_runtime.js'), 'utf8'), {
     module: runtimeModule, Buffer, process: { env: environment },
-    require: (name) => name === './f82_sprite' ? sprite : name === './f8x_motion' ? require('../shared/f8x_motion') : {},
+    require: (name) => name === './f8x_engine_profile' ? require('../shared/f8x_engine_profile') : name === './f82_sprite' ? sprite : name === './f8x_motion' ? require('../shared/f8x_motion') : {},
 }, { filename: 'f8x_runtime.js' });
 const Runtime = runtimeModule.exports;
 const settings = { f8xLimitSource: 'auto', f82Redline: 7200, shiftBefore: 300, coldGuard: true };
@@ -18,6 +18,7 @@ const data = { oil: 90, rpm: 7050, demo: false, speed: 0 };
 let liveLimit = null;
 const runtime = Object.assign(Object.create(Runtime.prototype), {
     setting: (key) => settings[key], car: { data: () => data }, rpmLimit: { value: () => liveLimit },
+    doors: { value: () => ({ model: 'G82' }) },
     f82Light: 'day', f82Pedal: 100, f82PedalAt: 1000, testAt: null, previewF82Engine: 'petrol',
     log: { info() {} },
 });
@@ -40,7 +41,7 @@ assert.deepEqual(lastUniform('u_edges'), [0, 0, 0, 0]);
 assert.deepEqual(lastUniform('u_build'), [0]);
 assert.deepEqual(lastUniform('u_bloom'), [0]);
 assert.equal(runtime.testShift(), false, 'no limit means no synthetic shift-light test');
-assert.match(runtime.rpmLimitStatus(), /BMW live max RPM: unavailable/);
+assert.match(runtime.rpmLimitStatus(), /BMW RPM candidate \(unverified\): unavailable/);
 
 for (const limit of [4000, 7200, 4500, 7200]) {
     liveLimit = limit;
@@ -50,7 +51,7 @@ for (const limit of [4000, 7200, 4500, 7200]) {
     const expected = sprite.shiftBand(widget.w.curve, limit, widget.w.shiftTrack[5]);
     assert.deepEqual(lastUniform('u_edges'), expected.edges);
     assert.deepEqual(lastUniform('u_cells'), expected.counts);
-    assert.match(runtime.rpmLimitStatus(), new RegExp('BMW live max RPM: ' + limit));
+    assert(runtime.rpmLimitStatus().includes('BMW RPM candidate (unverified): ' + limit));
 }
 assert(widget.shiftBuildCount > 0, 'warm full pedal builds the lights with a valid limit');
 assert.notEqual(widget.shiftFlashAt, null, 'warm full pedal near the limit starts flashing');
