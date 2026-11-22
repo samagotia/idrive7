@@ -4,6 +4,7 @@ const assert = require('assert').strict;
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+const performance = require('../shared/f8x_performance');
 const root = path.resolve(__dirname, '..');
 const signalFile = path.join(root, 'kit/runtime/signals.js');
 const vehicleFile = path.join(root, 'shared/f8x_vehicle.js');
@@ -63,6 +64,10 @@ async function run() {
         module: vehicleModule, Date: { now: () => now },
         process: { env: {}, uptime: () => now / 1000 },
         clearInterval() {},
+        require(name) {
+            if (name === './f8x_performance') return performance;
+            throw new Error('Unexpected vehicle dependency: ' + name);
+        },
     }, { filename: vehicleFile });
     const Car = vehicleModule.exports;
     const signals = { watch(iface, instance, handlers, log, options) {
@@ -142,6 +147,14 @@ async function run() {
             'repeated valid zero getters keep parked signals fresh');
         assert.equal(samples.length, beforeStationary + 1,
             '180 valid RPM polls and 36 speed reads emit only the changed zero, with no redundant render wakeups');
+        const timing = car.timing.snapshot(now);
+        assert(timing.ready);
+        assert.equal(timing.signals.rpm.lastValue, 0);
+        assert.equal(timing.signals.rpm.ageMs, 0);
+        assert(timing.signals.rpm.receivedHz > 80 && timing.signals.rpm.changedHz <= 2,
+            'actual Car diagnostics count duplicate getter deliveries separately from changed readings');
+        assert.equal(timing.signals.speed.receivedHz, 20,
+            'actual speed diagnostics retain the configured receive cadence despite suppressed callbacks');
         assert.equal(reads.filter((read) => read.field === speedField && read.at > 1000 && read.at <= 2000).length, 20,
             'getter-only speed backup performs exactly 20 reads per second');
         assert.equal(reads.filter((read) => read.field === tempField).length, tempReadsAtStart,

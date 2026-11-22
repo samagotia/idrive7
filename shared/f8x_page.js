@@ -14,7 +14,7 @@ const COLOURS = {
     background: '#05070a', text: '#eef2f8', muted: '#8a96a8', line: '#ffffff12',
     blue: '#2b7fff', blueLight: '#5aa2ff', card: '#ffffff08',
 };
-const TABS = [['designs', 'Designs'], ['readouts', 'Readouts'], ['settings', 'Settings'], ['vehicle', 'Vehicle']];
+const TABS = [['designs', 'Designs'], ['readouts', 'Readouts'], ['settings', 'Settings'], ['vehicle', 'Vehicle'], ['performance', 'Performance']];
 const GENERAL_SETTINGS = ['units', 'f8xOilScale', 'f8xBacklightColour', 'consumptionUnits', 'clockSource', 'clock', 'timeZone', 'tankLitres', 'f8xLimitSource', 'f82Redline', 'shiftBefore'];
 
 Object.assign(themes.THEMES.m_tricolour, {
@@ -106,6 +106,7 @@ class F8xPage {
         this.lastCheckAt = now;
         this.nextCheckAt = now + LIVE_REFRESH_MS;
         const live = this.tab === 'readouts' ? this.runtime.infoStatus()
+            : this.tab === 'performance' ? this.runtime.performanceLines().join('|')
             : this.tab === 'vehicle' ? this.runtime.doorStatusText()
                 : this.tab === 'settings' ? this.runtime.rpmLimitDetails() : '';
         const key = JSON.stringify([this.tab, this.get('hudLayout'), this.runtime.activeName,
@@ -126,6 +127,7 @@ class F8xPage {
         if (this.tab === 'readouts') this.drawReadouts(cv);
         if (this.tab === 'settings') this.drawSettings(cv);
         if (this.tab === 'vehicle') this.drawVehicle(cv);
+        if (this.tab === 'performance') this.drawPerformance(cv);
         if (this.tab !== 'readouts') cv.text(this.runtime.rpmLimitStatus(), CONTENT_X, bottom - 36, 18,
             COLOURS.muted, { literal: true });
         if (this.tab === 'settings') cv.text(this.runtime.rpmLimitDetails(), CONTENT_X, bottom - 62, 15,
@@ -190,6 +192,17 @@ class F8xPage {
             && (key !== 'timeZone' || this.get('clockSource') === 'system'))
             .forEach((key, index) => this.drawSetting(cv, key,
             CONTENT_X + (index % 2) * (width + gap), 92 + Math.floor(index / 2) * 58, width));
+    }
+
+    drawPerformance(cv) {
+        cv.text('Performance', CONTENT_X, 74, 26, COLOURS.text, { font: 'bold', literal: true });
+        ['f8xLampRenderer', 'f8xRpmNeedleMode'].forEach((key, index) =>
+            this.drawSetting(cv, key, CONTENT_X, 92 + index * 60, CONTENT_WIDTH));
+        this.runtime.performanceLines().forEach((line, index) =>
+            cv.text(fitText(cv, line, CONTENT_WIDTH, 17), CONTENT_X, 238 + index * 28, 17,
+                COLOURS.muted, { literal: true }));
+        cv.text('Smooth mode estimates only the RPM needle, within one degree.', CONTENT_X, 420, 16,
+            COLOURS.muted, { literal: true });
     }
 
     drawSetting(cv, key, x, y, width) {

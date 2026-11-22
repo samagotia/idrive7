@@ -49,7 +49,7 @@ const runtime = Object.assign(Object.create(moduleUnderTest.exports.prototype), 
     setting: (key) => settings[key], doors: { value: () => metadata },
     _effectiveFormat: () => 'metric', car: { data: () => ({ oil: 100, condition: 10 }) },
     rpmLimit: { value: () => candidate, status: () => ({ raw: 163, reason: 'live', ageMs: 0 }) },
-    activeName: 'our_m4', _formatSignature: null, client: { ready: true }, widgets: [],
+    activeName: 'our_m4', _formatSignature: null, client: { ready: true }, clients: [], widgets: [],
     _rebuild: () => { rebuilds++; }, _updateF82Startup() {}, _queueF82() {},
 });
 assert.equal(runtime._oilScaleInfo().source, 'fallback');

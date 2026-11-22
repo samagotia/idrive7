@@ -10,6 +10,7 @@ const fakeProcess = { env: {}, uptime: () => now / 1000 };
 const carModule = { exports: {} };
 vm.runInNewContext(fs.readFileSync(path.join(root, 'shared/f8x_vehicle.js'), 'utf8'), {
     module: carModule, process: fakeProcess, clearInterval, setInterval,
+    require: (name) => name === './f8x_performance' ? require('../shared/f8x_performance') : require(name),
 });
 const moduleUnderTest = { exports: {} };
 vm.runInNewContext(fs.readFileSync(path.join(root, 'shared/f8x_runtime.js'), 'utf8'), {

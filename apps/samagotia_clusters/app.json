@@ -4,7 +4,7 @@
   "description": "Custom instrument cluster designs for BMW iDrive 7. Includes F8X with live vehicle data and parked-test fallback to the BMW cluster.",
   "vendor": "Samagotia",
   "loggingId": "SMGC",
-  "version": "0.16.8",
+  "version": "0.16.9",
   "iconGlyph": "SMG",
   "shared": [
     "f8x_runtime.js",
@@ -13,6 +13,9 @@
     "f8x_gear_recommendation.js",
     "f8x_gear_recommendation_art.js",
     "f8x_motion.js",
+    "f8x_shift_art.js",
+    "f8x_rpm_presentation.js",
+    "f8x_performance.js",
     "f8x_page.js",
     "f8x_vehicle.js",
     "f8x_cruise.js",
@@ -118,6 +121,38 @@
     "tankLitres": 65
   },
   "settings": [
+    {
+      "key": "f8xLampRenderer",
+      "label": "Lamp drawing",
+      "type": "choice",
+      "default": "cached",
+      "options": [
+        [
+          "cached",
+          "Cached images"
+        ],
+        [
+          "shader",
+          "Original shaders"
+        ]
+      ]
+    },
+    {
+      "key": "f8xRpmNeedleMode",
+      "label": "RPM needle motion",
+      "type": "choice",
+      "default": "measured",
+      "options": [
+        [
+          "measured",
+          "Measured"
+        ],
+        [
+          "smooth",
+          "Smooth (visual estimate)"
+        ]
+      ]
+    },
     {
       "key": "f8xNativeBottomStrip",
       "label": "Keep BMW bottom strip clear (test)",

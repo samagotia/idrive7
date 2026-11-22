@@ -22,6 +22,8 @@
   ],
   "visibleSettings": [
     "hudLayout",
+    "f8xLampRenderer",
+    "f8xRpmNeedleMode",
     "f8xNativeBottomStrip",
     "units",
     "f8xOilScale",
@@ -43,5 +45,5 @@
     "f8xVehicleLayout",
     "f8xSteeringSide"
   ],
-  "version": "0.16.8"
+  "version": "0.16.9"
 }

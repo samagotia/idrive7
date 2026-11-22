@@ -1,4 +1,4 @@
-# Native M-cluster rectangles: parked comparison build 0.16.8
+# Native M-cluster rectangles: parked comparison build 0.16.9
 
 This is an experimental workaround, not a verified G82 fix. It does not change the vehicle, cluster coding, renderer installation, scene ID or target. No car action is performed by building or previewing it.
 
@@ -25,4 +25,4 @@ The scene geometry reaches the cluster-side graphics renderer, but no inspected 
 
 Local tests check actual renderer commands, cropped pixels in Day/Night, backpressure, hidden-layer bounds, all needle sweeps, exact dial geometry, mode switching and complete parked-test fallback. They cannot emulate BMW's proprietary masks or prove that this workaround removes them.
 
-The release package is `samagotia_clusters@0.16.8.tgz` in the GitHub catalog release. MGU Store obtains its URL and checksum from the catalog. Publication does not install anything in the car or establish that the workaround succeeds there.
+The release package is `samagotia_clusters@0.16.9.tgz` in the GitHub catalog release. MGU Store obtains its URL and checksum from the catalog. Publication does not install anything in the car or establish that the workaround succeeds there.

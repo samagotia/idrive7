@@ -2,7 +2,7 @@
 
 Standalone BMW iDrive 7 instrument-cluster app featuring **F8X**. App ID: `samagotia_clusters`.
 
-![F8X — local preview with simulated signals](docs/preview-0.16.8-day.png)
+![F8X — local preview with simulated signals](docs/preview-0.16.9-day.png)
 
 ## MGU Store installation
 
@@ -14,11 +14,15 @@ Add this GitHub repository as a source in MGU Store. The binary catalog is:
 
 The app starts with the **BMW cluster** selected and demo data off on the car. Select F8X only while parked for initial checks. Missing/stale speed or RPM, or renderer disconnection, returns to BMW and requires manual reselection. Live readers are source mapped; G82 reception, cold-limit tracking and native BMW warning takeover remain unverified on the car.
 
-## Parked-test update 0.16.8
+## Parked-test update 0.16.9
 
-RPM and speed no longer wait for the extra 36 ms needle easing. Companion poses share one bounded socket write per frame, unchanged critical readings no longer wake the renderer, and speed backup reads run every 50 ms instead of 500 ms (RPM remains 10 ms). Live digital speed and gear can refresh every 50 ms rather than 200 ms. These changes reduce app delay; actual car latency and FPS remain unmeasured. [Response changes](docs/f8x-latency-0.16.8.md).
+Shift lights and the lower arc now use cached resident images by default, replacing their procedural fragment shaders. Lamp colours, bloom and dynamic positions are retained. Both bloom variants preload; buildup and flashing change visibility without per-frame pixel uploads. **Performance → Lamp drawing** retains the original shaders for a parked comparison.
 
-Relative to 0.16.7, main dials are 10% smaller and outer gauges 20% smaller, in both Day and Night. Main hub spacing increases from 700 to 740 pixels. **Designs → Keep BMW bottom strip clear (test)** remains On by default, with the same dial geometry when toggled Off. Physical trim clearance and the black-box workaround still require a parked check. [Comparison instructions](docs/native-m-boxes-parked-test.md).
+**Performance → RPM needle motion** defaults to **Measured**. Optional **Smooth (visual estimate)** adds tightly bounded movement between sparse rising RPM samples, only with fresh forward-gear and pedal data. The visual lead cannot exceed one dial degree or 100 RPM and stops on shifts, lift, invalid/stale input or congestion. It never changes raw readings, digital information, engine limits or shift decisions.
+
+The Performance page separates received readings, changed readings and app command timing. These counters do not measure display FPS or sensor-to-screen latency. Actual car GPU improvement remains unmeasured. [Implementation and comparison](docs/performance-0.16.9.md).
+
+The 0.16.8 sizes and wider spacing remain unchanged in Day and Night. BMW startup, car demo-off policy, stale speed/RPM fallback and the bottom-strip comparison option remain active. [Parked comparison instructions](docs/native-m-boxes-parked-test.md).
 
 ## Mac preview
 
@@ -40,4 +44,4 @@ for test in bench/test*.js; do node "$test" || exit 1; done
 
 The builder creates a local staging placeholder and removes it before packaging. No BMW SDK, private keys, coding backups or personal preview settings are distributed. The Store supplies the real SDK on the head unit.
 
-Original licences and credits are preserved in [NOTICE](NOTICE) and [LICENSE](LICENSE), including MPL-covered renderer-client source in `shared/cluster_render_client.js`. Full features and limitations: [app documentation](apps/samagotia_clusters/README.md). [Local validation](docs/validation-0.16.8.json).
+Original licences and credits are preserved in [NOTICE](NOTICE) and [LICENSE](LICENSE), including MPL-covered renderer-client source in `shared/cluster_render_client.js`. Full features and limitations: [app documentation](apps/samagotia_clusters/README.md). [Local validation](docs/validation-0.16.9.json).

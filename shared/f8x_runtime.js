@@ -25,6 +25,8 @@ const { GearRecommendation } = require('./f8x_gear_recommendation');
 const gearRecommendationArt = require('./f8x_gear_recommendation_art');
 const cruiseArt = require('./f8x_cruise_art');
 const { NeedleMotion, framePlan } = require('./f8x_motion');
+const shiftArt = require('./f8x_shift_art');
+const { RpmPresentation } = require('./f8x_rpm_presentation');
 const { evaluateFuelWarning } = require('./f8x_fuel_warning');
 const fuelWarningArt = require('./f8x_fuel_warning_art');
 const { Doors } = require('./f8x_doors');
@@ -32,7 +34,7 @@ const engineProfile = require('./f8x_engine_profile');
 const doorArt = require('./f8x_door_art');
 const { present: presentWarning } = require('./f8x_warning');
 
-const IMAGE_TYPES = { text: true, icon: true, f82sprite: true };
+const IMAGE_TYPES = { text: true, icon: true, f82sprite: true, f8xshiftlens: true, f8xarcimage: true };
 const STATUS_ASK_MS = 2000;
 const MAX_CONN = 4;
 const PIXEL_BYTES = 16 * 1024 * 1024;
@@ -117,6 +119,9 @@ class F8xRuntime {
         this.f82SentAt = 0;
         this.f82NextFrameAt = null;
         this.f82Motion = new Map();
+        this.rpmPresentation = new RpmPresentation();
+        this.f82RpmMoving = false;
+        this.shiftState = null;
         this.f82Light = 'day';
         this.f82Pedal = null;
         this.f82PedalAt = 0;
@@ -152,7 +157,11 @@ class F8xRuntime {
                 ctx.settings.set(key, 'off');
                 return;
             }
-            if (key === 'f8xBacklightColour') {
+            if (key === 'f8xRpmNeedleMode') {
+                this.rpmPresentation.clear(); this.f82RpmMoving = false;
+                this.f82Needles.forEach((x) => { if (x.w.signal === 'rpm') x.last = null; });
+                this._queueF82(); this._status();
+            } else if (key === 'f8xBacklightColour') {
                 // Replace existing face textures in place; motion and layer
                 // ownership remain intact, with no extra resident images.
                 this.widgets.forEach((x) => {
@@ -229,7 +238,11 @@ class F8xRuntime {
         };
         this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'gear', 'condition'], extra, this.parkedTest);
         this.car.setRedline(this.setting('f82Redline'));
-        this.car.onSample(() => this._queueF82());
+        this.car.onSample(() => {
+            const needle = this.f82Needles && this.f82Needles.find((x) => x.w.signal === 'rpm' && !x.w.needleId);
+            if (needle) this._rpmNeedleValue(this.car.data().rpm, motionClockMs(), needle.w.curve);
+            this._queueF82();
+        });
     }
 
     fuelWarningState() {
@@ -383,6 +396,8 @@ class F8xRuntime {
         this.f82PendingLight = null;
         this.f82Needles = [];
         this.f82Motion.clear();
+        if (this.rpmPresentation) this.rpmPresentation.clear();
+        this.f82RpmMoving = false;
         this.f82NextFrameAt = null;
         if (this.layouts.close) this.layouts.close();
         this.car.stop();
@@ -814,6 +829,9 @@ class F8xRuntime {
         this.f82Needles = [];
         this.f82SentAt = 0;
         this.f82Motion.clear();
+        if (this.rpmPresentation) this.rpmPresentation.clear();
+        this.f82RpmMoving = false;
+        this.shiftState = null;
         this.f82NextFrameAt = null;
         this.sheets = [];
         this.pixelBytes = 0;
@@ -873,9 +891,11 @@ class F8xRuntime {
             const cruise = cruiseArt.widgetsFor({ widgets: shown });
             const lowerArc = f82Sprite.lowerArcOf({ widgets: shown }, (id) => this._f82Asset(id));
             const bottom = nativeStrip ? panelStrip.BOTTOM : this.size[1];
+            const arc = lowerArc && this.setting('f8xLampRenderer') !== 'shader'
+                ? Object.assign({}, lowerArc, { type: 'f8xarcimage' }) : lowerArc;
             shown = shown.concat(cruise,
                 gearRecommendationArt.widgetsFor({ widgets: shown }),
-                lowerArc ? [lowerArc] : [],
+                arc ? [arc] : [],
                 fuelWarningArt.widgetsFor({ widgets: shown }, (id) => this._f82Asset(id), bottom),
                 doorArt.widgetsFor({ widgets: shown }, (id) => this._f82Asset(id), bottom));
         }
@@ -883,7 +903,9 @@ class F8xRuntime {
         const sprites = shown.filter((w) => w.type === 'f82sprite');
         const tach = sprites.find((w) => w.signal === 'rpm');
         const track = tach && sprites.find((w) => w.shiftTrack);
-        let layers = shown.concat(track ? [f82Sprite.shiftTrackOf(track, tach)] : [],
+        const shift = track && f82Sprite.shiftTrackOf(track, tach);
+        const lamps = shift ? this.setting('f8xLampRenderer') === 'shader' ? [shift] : shiftArt.widgetsFor(shift) : [];
+        let layers = shown.concat(lamps,
             sprites.filter((w) => w.shadow).map(f82Sprite.shadowOf),
             sprites.filter((w) => w.glass).map(f82Sprite.glassOf));
         if (this.f82Readouts && this.setting('f8xNativeBottomStrip')) {
@@ -917,7 +939,7 @@ class F8xRuntime {
             else {
                 if (IMAGE_TYPES[e.w.type]) {
                     const sprite = e.w.type === 'f82sprite' ? this._f82Asset(e.w.asset) : null;
-                    const payload = (sprite ? sprite.w * sprite.h : e.w.w * e.w.h) * 4;
+                    const payload = (sprite ? sprite.w * sprite.h : (e.w.iw || e.w.w) * (e.w.ih || e.w.h)) * 4;
                     own++; bytes += payload; px += payload * 2;
                 } else effects++;
                 this._guard('widget ' + e.w.id, () => this._create(e.w, null));
@@ -1055,7 +1077,7 @@ class F8xRuntime {
                     this._updateWarning(x, false);
                     return;
                 }
-                if (x.w.type === 'f8xarc') this._update(x, now, true);
+                if (x.w.type === 'f8xarc' || x.w.type === 'f8xarcimage' || x.w.type === 'f8xshiftlens') this._update(x, now, true);
                 if (x.w.type === 'atext' && x.w.nightColor) {
                     x.c.uniform(x.ref, 'u_color', rgba(color(this.theme, light === 'night' ? x.w.nightColor : x.w.color)));
                 }
@@ -1075,6 +1097,7 @@ class F8xRuntime {
         else {
             c = this._clientAt(this._connOf(w));
             const base = { target: this.target, klass: w.class || 'content', z: w.z || 0, x: w.x, y: w.y, w: w.w, h: w.h };
+            if (w.type === 'f8xshiftlens') base.visible = false;
             if (w.warning || w.cruiseRole || w.warningRole || w.doorRole || w.gearRecommendation) base.visible = false;
             if (w.type === 'f82sprite') {
                 sprite = this._f82Asset(w.asset);
@@ -1096,7 +1119,7 @@ class F8xRuntime {
                     } else base.previewNeedle = true;
                 }
                 ref = c.image(Object.assign({ iw: sprite.w, ih: w.sourceRows === undefined ? sprite.h : w.sourceRows }, base));
-            } else if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
+            } else if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.iw || w.w, ih: w.ih || w.h }, base));
             else ref = c.effect(Object.assign({ fs: shaders[w.type] }, base));
             if (!ref) { this.log.warn('widget "' + w.id + '": layer refused'); return; }
         }
@@ -1159,8 +1182,11 @@ class F8xRuntime {
         if (!this.client.ready) return;
         this._queueF82();
         const now = Date.now();
-        this.widgets.forEach((widget) => {
-            if (widget.w.type !== 'f82sprite') this._guard('widget ' + widget.w.id, () => this._update(widget, now, false));
+        this.clients.forEach((client) => {
+            const draw = () => this.widgets.forEach((widget) => {
+                if (widget.c === client && widget.w.type !== 'f82sprite') this._guard('widget ' + widget.w.id, () => this._update(widget, now, false));
+            });
+            if (typeof client.batchPoses === 'function') client.batchPoses(draw); else draw();
         });
     }
 
@@ -1170,6 +1196,8 @@ class F8xRuntime {
             // No intermediate poses accumulate while the socket is congested.
             // Resume at the latest real reading instead of replaying a stale glide.
             this.f82Motion.clear(); this.f82NextFrameAt = null;
+            if (this.rpmPresentation) this.rpmPresentation.clear();
+            this.f82RpmMoving = false;
             return;
         }
         const plan = framePlan(motionClockMs(), this.f82NextFrameAt);
@@ -1177,23 +1205,123 @@ class F8xRuntime {
             this.f82Timer = null;
             if (this.stopped || !this.client.ready) return;
             if (this.f82Needles.some((x) => x.c.blocked)) {
-                this.f82Motion.clear(); this.f82NextFrameAt = null; return;
+                this.f82Motion.clear(); this.f82NextFrameAt = null;
+                if (this.rpmPresentation) this.rpmPresentation.clear();
+                this.f82RpmMoving = false; return;
             }
             const now = Date.now(), motionNow = motionClockMs();
             this.f82NextFrameAt = motionNow > plan.nextAt ? motionNow + plan.interval : plan.nextAt;
             const connections = Array.from(new Set(this.f82Needles.map((x) => x.c)));
+            let sent = false;
+            const fields = {};
             connections.forEach((client) => {
                 const draw = () => this.f82Needles.forEach((x) => {
                     if (x.c !== client) return;
                     this._guard('widget ' + x.w.id, () => {
-                        if (this._updateF82(x, now, false, motionNow)) this.f82SentAt = now;
+                        if (this._updateF82(x, now, false, motionNow)) {
+                            this.f82SentAt = now; sent = true; fields[x.w.signal] = true;
+                        }
                     });
                 });
                 if (typeof client.batchPoses === 'function') client.batchPoses(draw);
                 else draw();
             });
-            if (Array.from(this.f82Motion.values()).some((motion) => motion.moving(motionNow))) this._queueF82();
+            if (sent && this.car.timing) {
+                const data = this.car.data();
+                this.car.timing.pose(fields.rpm ? data.rpm : undefined, fields.speed ? data.speed : undefined, motionNow);
+            }
+            if (this.f82RpmMoving || Array.from(this.f82Motion.values()).some((motion) => motion.moving(motionNow))) this._queueF82();
         }, plan.delay);
+    }
+
+    _rpmNeedleValue(raw, now, curve) {
+        if (!this.ctx || this.setting('f8xRpmNeedleMode') !== 'smooth') {
+            if (this.rpmPresentation) this.rpmPresentation.clear();
+            this.f82RpmMoving = false;
+            return raw;
+        }
+        if (!this.rpmPresentation) this.rpmPresentation = new RpmPresentation();
+        const data = this.car.data();
+        let cap = 0;
+        if (isNum(raw) && raw >= 1000 && Array.isArray(curve)) {
+            const endAngle = curve[curve.length - 1][1];
+            const targetAngle = Math.min(endAngle, f82Sprite.angle(curve, raw) + 1);
+            for (let i = 1; i < curve.length; i++) {
+                if (targetAngle <= curve[i][1] && curve[i][1] > curve[i - 1][1]) {
+                    const atAngle = curve[i - 1][0] + (targetAngle - curve[i - 1][1])
+                        * (curve[i][0] - curve[i - 1][0]) / (curve[i][1] - curve[i - 1][1]);
+                    cap = Math.min(100, Math.max(0, atAngle - raw));
+                    break;
+                }
+            }
+        }
+        const limit = this._f82ShiftLimit(data.oil);
+        if (isNum(limit)) cap = Math.min(cap, Math.max(0, limit - raw));
+        const fresh = this.car.missingCriticalSignal(1500) === null;
+        const out = this.rpmPresentation.sample(raw, now, {
+            mode: 'smooth', stage: data.stage, gear: data.gear,
+            pedal: this._f82PedalPercent(data, Date.now()), fresh, available: fresh,
+            blocked: this.client.blocked, maxLeadRpm: cap,
+        });
+        this.f82RpmMoving = out.moving;
+        return out.rpm;
+    }
+
+    _shiftFrame(w, now) {
+        if (this.shiftState && this.shiftState.now === now && this.shiftState.track === w.shiftTrack
+            && this.shiftState.curve === w.curve) return this.shiftState;
+        const data = this.car.data(), limit = this._f82ShiftLimit(data.oil), night = this.f82Light === 'night';
+        if (!isNum(limit) || limit < 500) { this.shiftState = null; return null; }
+        const key = [limit, night, w.shiftTrack.join(','), w.curve.map((p) => p.join(':')).join(',')].join('|');
+        let state = this.shiftState;
+        if (!state || state.key !== key) {
+            state = { key, band: f82Sprite.shiftBand(w.curve, limit, w.shiftTrack[5]), flashAt: state && state.flashAt,
+                track: w.shiftTrack, curve: w.curve };
+            this.shiftState = state;
+        }
+        if (state.now === now) return state;
+        const testRpm = this._testRpm(now), rpm = isNum(testRpm) ? testRpm : data.rpm;
+        const active = isNum(data.oil) && data.oil >= f82Sprite.SHIFT_OIL_WARM_C
+            && (isNum(testRpm) || this._f82PedalPercent(data, now) === 100);
+        const point = Math.max(f82Sprite.SHIFT_TRACK_START_RPM, limit - this.setting('shiftBefore'));
+        const flash = active && isNum(rpm) && rpm >= point;
+        if (!flash) state.flashAt = null;
+        else if (!isNum(state.flashAt) || now < state.flashAt) state.flashAt = now;
+        const dark = flash && Math.floor((now - state.flashAt) / F82_SHIFT_HALF_PERIOD_MS) % 2 === 1;
+        state.build = active && !dark ? f82Sprite.shiftBuildCount(w.curve, state.band, rpm, point) : 0;
+        state.bloom = active && !dark && state.build > 0 ? 1 : 0.6;
+        state.night = night; state.now = now;
+        return state;
+    }
+
+    _updateShiftLens(x, now, force) {
+        const state = this._shiftFrame(x.w, now);
+        const frame = state ? shiftArt.frameFor(x.w, state) : { visible: false };
+        if (frame.pixels && x.lensPixels !== frame.pixelsKey) {
+            this._blit(x, null, frame.pixels);
+            x.lensPixels = frame.pixelsKey;
+        }
+        const pose = Object.assign({ visible: frame.visible }, frame.pose || {});
+        const key = JSON.stringify(pose);
+        if (force || x.lensPose !== key) {
+            x.lensPose = key; x.c.set(x.ref, pose);
+        }
+    }
+
+    performanceLines() {
+        if (!this.car.timing) return ['Performance counters unavailable'];
+        const s = this.car.timing.snapshot(motionClockMs());
+        const rate = (v) => isNum(v) ? v.toFixed(1) + '/s' : 'collecting';
+        const input = (name) => {
+            const field = s.signals[name];
+            return name.toUpperCase() + ': received ' + rate(field.receivedHz) + ', changed ' + rate(field.changedHz)
+                + ', age ' + (isNum(field.ageMs) ? Math.round(field.ageMs) + ' ms' : 'unknown');
+        };
+        const delay = (v) => isNum(v) ? v.toFixed(1) + ' ms' : 'awaiting changes';
+        return [input('rpm'), input('speed'), 'Needle command batches: ' + rate(s.output.commandHz),
+            'App dispatch delay: mean ' + delay(s.output.meanDispatchMs) + ', p95 ' + delay(s.output.p95DispatchMs),
+            'Renderer backend: ' + (this.client.backend || 'unknown') + (s.capped ? ' (counter window capped)' : ''),
+            'These are app timings, not display FPS or sensor-to-screen latency.'];
     }
 
     _updateF82(x, now, force, motionNow = motionClockMs()) {
@@ -1205,7 +1333,8 @@ class F8xRuntime {
         let degrees = null, moving = false;
         if (!shadowOnly || this.f82Light === 'day' || nightShadow) {
             const test = signal === 'rpm' ? this._testRpm(now) : null;
-            const raw = signal === 'rpm' ? (isNum(test) ? test : this.car.data().rpm) : this._raw(signal);
+            let raw = signal === 'rpm' ? (isNum(test) ? test : this.car.data().rpm) : this._raw(signal);
+            if (signal === 'rpm' && !isNum(test)) raw = this._rpmNeedleValue(raw, motionNow, curve);
             const value = signal === 'rpm' ? f82Sprite.rpmAngle(curve, raw, this.car.data().condition === 10)
                 : f82Sprite.angle(curve, raw);
             const id = x.w.needleId || x.w.id;
@@ -1315,7 +1444,14 @@ class F8xRuntime {
 
     _update(x, now, force) {
         const w = x.w;
-        if (w.gearRecommendation) {
+        if (w.type === 'f8xshiftlens') {
+            this._updateShiftLens(x, now, force);
+        } else if (w.type === 'f8xarcimage') {
+            if (force || x.last !== this.f82Light) {
+                x.last = this.f82Light;
+                this._blitDiff(x, shiftArt.arcPixelsFor(w, this.f82Light === 'night'));
+            }
+        } else if (w.gearRecommendation) {
             const direction = this.gearRecommendation && this.gearRecommendation.value(this.car.data());
             const visible = direction === w.gearRecommendation;
             if (force || visible !== x.last) {

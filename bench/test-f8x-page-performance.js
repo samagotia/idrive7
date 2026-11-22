@@ -8,6 +8,7 @@ const source = path.resolve(__dirname, '../shared/f8x_page.js');
 let now = 1000, canvases = 0, images = 0, kicks = 0, tick;
 let settingsChanged, layoutChanged, statusChanged;
 let info = 'range live', doors = 'doors closed', details = 'limit age 0s', oilScale = 'Auto G82: 50–150 °C';
+let performance = ['RPM received 100/s', 'App command timing only'];
 const targets = new Map();
 const values = { hudLayout: 'off', units: 'metric', f8xLimitSource: 'auto', clockSource: 'car', f82InfoPage: 'off' };
 const schema = (key) => ({ key, label: key, type: 'choice', options: key === 'hudLayout'
@@ -28,6 +29,7 @@ const runtime = { activeName: 'off', lastStatus: 'BMW cluster',
     setting: (key) => values[key], onStatus(fn) { statusChanged = fn; },
     rpmLimitStatus: () => 'BMW live max RPM: 7200 rpm',
     rpmLimitDetails: () => details, infoStatus: () => info, doorStatusText: () => doors, oilScaleStatus: () => oilScale,
+    performanceLines: () => performance,
 };
 const moduleUnderTest = { exports: {} };
 vm.runInNewContext(fs.readFileSync(source, 'utf8'), {
@@ -70,6 +72,14 @@ const next = async (ms) => { now += ms; await tick(); };
     assert.equal(canvases, settingsPaints + 3, 'clock rollback cannot freeze later updates');
     const beforeModelLoss = canvases; oilScale = 'Fallback: 50–150 °C';
     await next(1000); assert.equal(canvases, beforeModelLoss + 1, 'oil-scale source changes repaint even when the scale values stay the same');
+    targets.get('tab:performance')(); await next(0);
+    const performancePaints = canvases;
+    assert(targets.has('setting:f8xLampRenderer') && targets.has('setting:f8xRpmNeedleMode'), 'render comparison and explicit RPM presentation controls are reachable');
+    performance = ['RPM received 100/s, changed 20/s', 'App command timing only'];
+    for (let i = 0; i < 58; i++) await next(17);
+    assert.equal(canvases, performancePaints, 'timing diagnostics do not add 60Hz settings-page rendering');
+    await next(14);
+    assert.equal(canvases, performancePaints + 1, 'timing diagnostics refresh at 1Hz');
     assert.equal(images, canvases); assert(kicks >= 6);
     console.log('F8X settings performance: unchanged 60 Hz callbacks skip canvas recording, live diagnostics refresh at 1 Hz, and settings/status/layout/tab events repaint immediately.');
 })().catch((error) => { console.error(error.stack); process.exitCode = 1; });

@@ -1,4 +1,5 @@
 'use strict';
+const { Performance } = require('./f8x_performance');
 
 // Adapted from cauliflowermossgrape's MGU App Kit car.js (MIT).
 // Retained copyright and licence terms are in LICENSE and NOTICE.
@@ -76,6 +77,7 @@ class Car {
         this.live = {};
         this.lastCar = 0;
         this.listeners = [];
+        this.timing = new Performance();
         this.subs = [];
         this.criticalAt = parkedTest ? {} : null;
         this.demoActive = false;
@@ -118,8 +120,9 @@ class Car {
                     const valid = Number.isInteger(raw) && raw >= 0 && raw < 65535
                         && Number.isFinite(value) && value >= 0;
                     this.criticalAt[key] = valid ? liveClockMs() : null;
+                    this.timing.signal(key, valid ? value : null, liveClockMs());
                     if (!valid) return;
-                }
+                } else this.timing.signal(key, value, liveClockMs());
                 put(key, value, true);
             });
         };

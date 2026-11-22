@@ -83,3 +83,11 @@ Parked feedback reports stable display in BMW's normal cluster view and repeated
 
 
 The custom panel keeps its large gear readout, speed/range/temperature information, cruise set-speed marker, fuel-reserve text/pump, door-opening illustration/text and verified sequential shift recommendation. Those are base-panel information, not replacements for BMW’s turn, parking-brake, seat-belt, engine or other native status telltales. Custom turn, parking-brake, standalone cruise-status and generic attention-triangle widgets are rejected even if an older saved layout or preference names them. The owner photo proves duplicate turn arrows and the retained stock parking-brake light; no claim is made that every other G82 icon’s native layer has been verified.
+
+## Cached lamps, RPM presentation and diagnostics (0.16.9)
+
+Cached lamp drawing is the default. The limiter/shift band uses small resident RGBA capsules, with both normal and strong bloom preloaded. Buildup and flashing change visibility and geometry only; no full-face image is encoded or sent each frame. The static lower arc is rasterised once per layout/lighting state. Original procedural shaders remain available on the Performance page for parked comparison. Cached composition uses 60 of the 64 per-connection drawable slots and approximately 10.07 MiB of the 16 MiB conservative texture budget in the standard layout.
+
+Measured RPM presentation remains the default. Optional Smooth mode estimates only the needle between sparse changed samples, bounded to one degree and 100 RPM and at most a 50 ms prediction horizon. It requires fresh forward-gear/pedal context; shifts, lift, invalid/stale input and congestion reset it. Raw vehicle data, digital readings, limiter settings and shift assistance use measured values.
+
+Performance diagnostics show callback reception versus changed-value cadence, input age, command cadence and local changed-reading-to-command delay. They do not measure ECU sample timestamps, instrument GPU time, display FPS or sensor-to-screen latency. Root-cause confirmation still needs a parked connected-car comparison.

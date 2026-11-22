@@ -192,6 +192,17 @@ async function run() {
         assert.equal(underlayLayer.opts.z, -1);
         assert(!underlayLayer.opts.exclusive, 'native BMW warnings retain priority');
         const produced = Array.from(hud.widgets.values()).map((x) => x.w);
+        assert.equal(produced.filter((w) => w.type === 'f8xshiftlens').length, 34, 'cached lamp rendering is the real default');
+        assert(produced.some((w) => w.type === 'f8xarcimage'), 'the static arc uses a cached image');
+        assert(!produced.some((w) => w.type === 'f82shift' || w.type === 'f8xarc'), 'default composition removes both procedural ring effects');
+        assert(hud.pixelBytes <= 16 * 1024 * 1024, 'cached composition respects the renderer memory budget');
+        for (const client of hud.clients) {
+            assert(Array.from(client.layers.values()).filter((l) => l.kind !== 'asset').length <= 64,
+                'each actual connection stays inside the layer budget');
+        }
+        assert(hud._layerRefs().length <= 96, 'all actual drawable layers stay inside the global budget');
+        assert.equal(settings.get('f8xRpmNeedleMode'), 'measured', 'default displayed RPM stays measured');
+        assert.equal(hud.performanceLines().length, 6, 'actual runtime exposes the diagnostic page data');
         assert(!produced.some((w) => w.indicator || w.warning === 'parkingBrake'
             || w.icon === 'parkingBrake' || w.icon === 'turnLeft' || w.icon === 'turnRight'
             || w.text === 'BRAKE' || w.cruiseRole === 'symbol'
@@ -235,6 +246,13 @@ async function run() {
         settings.set('f8xNativeBottomStrip', true);
         assertStripClear();
         assert.deepEqual(dialGeometry(), originalGeometry);
+        settings.set('f8xLampRenderer', 'shader');
+        assert(Array.from(hud.widgets.values()).some((x) => x.w.type === 'f82shift'), 'original shader path remains available for comparison');
+        assert(!Array.from(hud.widgets.values()).some((x) => x.w.type === 'f8xshiftlens'), 'comparison never draws both lamp implementations');
+        assert.deepEqual(dialGeometry(), originalGeometry);
+        settings.set('f8xLampRenderer', 'cached');
+        assertStripClear();
+        assert.equal(Array.from(hud.widgets.values()).filter((x) => x.w.type === 'f8xshiftlens').length, 34);
         await delay(1650);
         assert(active(), 'quiet but readable zero values keep F8X active');
         assert.equal(hud.car.data().demo, false);
