@@ -8,7 +8,7 @@ const root = path.resolve(__dirname, '../apps/samagotia_clusters/cluster');
 const layout = JSON.parse(fs.readFileSync(path.join(root, 'layouts/our_m4.json'), 'utf8'));
 const load = (id) => JSON.parse(fs.readFileSync(path.join(root, 'f82', id + '.json'), 'utf8'));
 const snapshot = JSON.stringify(layout);
-for (const [signal, expected] of [['speed', [626, 351]], ['rpm', [1294, 351]], ['fuel', [252, 535]], ['oil', [1668, 535]]]) {
+for (const [signal, expected] of [['speed', [610, 343]], ['rpm', [1310, 343]], ['fuel', [160, 520]], ['oil', [1760, 520]]]) {
     assert.deepEqual(pivotOf(layout, signal, load), { x: expected[0], y: expected[1] });
     const needle = layout.widgets.find((w) => w.signal === signal);
     const moved = Object.assign({}, needle, { x: needle.x - 17, y: needle.y + 23 });

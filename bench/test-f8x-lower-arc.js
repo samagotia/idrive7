@@ -9,21 +9,21 @@ const root = path.resolve(__dirname, '..');
 const layout = JSON.parse(fs.readFileSync(path.join(root, 'apps/samagotia_clusters/cluster/layouts/our_m4.json')));
 const read = (id) => JSON.parse(fs.readFileSync(path.join(root, 'apps/samagotia_clusters/cluster/f82', id + '.json')));
 const arc = sprite.lowerArcOf(layout, read);
-assert.equal(arc.x + arc.arcCenter[0], 1294);
-assert.equal(arc.y + arc.arcCenter[1], 351);
-assert.deepEqual(arc.arcRadii, [258.5, 258.5]);
-assert.equal(arc.arcThickness, 8);
-assert(arc.y > 530 && arc.y + arc.h < 625, 'arc clears gear and leaves bottom row space');
+assert.equal(arc.x + arc.arcCenter[0], 1310);
+assert.equal(arc.y + arc.arcCenter[1], 343);
+for (const radius of arc.arcRadii) assert(Math.abs(radius - 258.5 * 1.14) < 1e-9);
+assert(Math.abs(arc.arcThickness - 8 * 1.14) < 1e-9);
+assert(arc.y > 550 && arc.y + arc.h <= 646, 'larger arc clears gear and the native bottom strip');
 assert.equal(sprite.lowerArcOf({ widgets: [] }, read), null);
 const scaled = JSON.parse(JSON.stringify(layout));
 for (const w of scaled.widgets) {
     w.x = w.x * 0.8 + 50; w.y *= 0.8; w.w *= 0.8; w.h *= 0.8;
 }
 const small = sprite.lowerArcOf(scaled, read);
-assert(Math.abs(small.x + small.arcCenter[0] - (1294 * 0.8 + 50)) < 1e-9);
-assert(Math.abs(small.y + small.arcCenter[1] - 351 * 0.8) < 1e-9);
-assert(Math.abs(small.arcRadii[0] - 258.5 * 0.8) < 1e-9);
-assert(Math.abs(small.arcThickness - 6.4) < 1e-9);
+assert(Math.abs(small.x + small.arcCenter[0] - (1310 * 0.8 + 50)) < 1e-9);
+assert(Math.abs(small.y + small.arcCenter[1] - 343 * 0.8) < 1e-9);
+assert(Math.abs(small.arcRadii[0] - 258.5 * 1.14 * 0.8) < 1e-9);
+assert(Math.abs(small.arcThickness - 8 * 1.14 * 0.8) < 1e-9);
 const runtimeModule = { exports: {} };
 vm.runInNewContext(fs.readFileSync(path.join(root, 'shared/f8x_runtime.js'), 'utf8'), {
     module: runtimeModule, Buffer, require: (name) => name === './f8x_shaders' ? shaders : {},

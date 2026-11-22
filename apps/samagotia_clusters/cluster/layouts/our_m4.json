@@ -1,37 +1,37 @@
 {
-  "_about" : "Metric F82 dial-face study traced from the reference photo. Four static faces, four rotated needle sprites and a live gear readout. The full-panel backdrop is opaque; its colour fades smoothly to black.",
-  "name" : "F8X",
-  "schemaVersion" : 2,
-  "sourceDesign" : "f82",
-  "theme" : "classic",
-  "widgets" : [
+  "_about": "F8X layout enlarged for the G82 display: uniformly scaled main gauges (+14%) and auxiliary gauges (+10%), with wider auxiliary placement. Texture-space pivots, curves and artwork retain their original registration. The runtime can crop the backdrop above BMW's bottom strip for the native-box comparison.",
+  "name": "F8X",
+  "schemaVersion": 2,
+  "sourceDesign": "f82",
+  "theme": "classic",
+  "widgets": [
     {
-      "asset" : "background",
-      "h" : 720,
-      "id" : "backdrop",
-      "nightAsset" : "background-night",
-      "own" : true,
-      "type" : "f82sprite",
-      "w" : 1920,
-      "x" : 0,
-      "y" : 0,
-      "z" : 0
+      "asset": "background",
+      "h": 720,
+      "id": "backdrop",
+      "nightAsset": "background-night",
+      "own": true,
+      "type": "f82sprite",
+      "w": 1920,
+      "x": 0,
+      "y": 0,
+      "z": 0
     },
     {
-      "asset" : "speed-face",
-      "h" : 488,
-      "id" : "speed_face",
-      "nightAsset" : "speed-face-night",
-      "own" : true,
-      "type" : "f82sprite",
-      "w" : 575,
-      "x" : 331,
-      "y" : 68,
-      "z" : 1
+      "asset": "speed-face",
+      "h": 556.32,
+      "id": "speed_face",
+      "nightAsset": "speed-face-night",
+      "own": true,
+      "type": "f82sprite",
+      "w": 655.5,
+      "x": 273.7,
+      "y": 20.38,
+      "z": 1
     },
     {
-      "asset" : "speed-needle-v2",
-      "curve" : [
+      "asset": "speed-needle-v2",
+      "curve": [
         [
           0,
           -120
@@ -41,33 +41,33 @@
           120
         ]
       ],
-      "h" : 283,
-      "id" : "speed_needle",
-      "nightAsset" : "speed-needle-v2-night",
-      "own" : true,
-      "pivot" : [
+      "h": 322.62,
+      "id": "speed_needle",
+      "nightAsset": "speed-needle-v2-night",
+      "own": true,
+      "pivot": [
         13,
         227
       ],
-      "shadow" : {
-        "asset" : "speed-needle-v2-shadow",
-        "dayAsset" : "speed-needle-v2-shadow-day",
-        "offsetY" : 0.028268551236749116
+      "shadow": {
+        "asset": "speed-needle-v2-shadow",
+        "dayAsset": "speed-needle-v2-shadow-day",
+        "offsetY": 0.028268551236749116
       },
-      "signal" : "speed",
-      "type" : "f82sprite",
-      "w" : 26,
-      "x" : 613,
-      "y" : 124,
-      "z" : 2
+      "signal": "speed",
+      "type": "f82sprite",
+      "w": 29.64,
+      "x": 595.18,
+      "y": 84.22,
+      "z": 2
     },
     {
-      "asset" : "rpm-face",
-      "h" : 488,
-      "id" : "rpm_face",
-      "nightAsset" : "rpm-face-night",
-      "own" : true,
-      "shiftTrack" : [
+      "asset": "rpm-face",
+      "h": 556.32,
+      "id": "rpm_face",
+      "nightAsset": "rpm-face-night",
+      "own": true,
+      "shiftTrack": [
         575,
         488,
         295,
@@ -75,15 +75,15 @@
         248.53556485355648,
         118
       ],
-      "type" : "f82sprite",
-      "w" : 575,
-      "x" : 999,
-      "y" : 68,
-      "z" : 1
+      "type": "f82sprite",
+      "w": 655.5,
+      "x": 973.7,
+      "y": 20.38,
+      "z": 1
     },
     {
-      "asset" : "rpm-needle-v2",
-      "curve" : [
+      "asset": "rpm-needle-v2",
+      "curve": [
         [
           0,
           -120
@@ -113,41 +113,41 @@
           106
         ]
       ],
-      "h" : 283,
-      "id" : "rpm_needle",
-      "nightAsset" : "rpm-needle-v2-night",
-      "own" : true,
-      "pivot" : [
+      "h": 322.62,
+      "id": "rpm_needle",
+      "nightAsset": "rpm-needle-v2-night",
+      "own": true,
+      "pivot": [
         13,
         227
       ],
-      "shadow" : {
-        "asset" : "rpm-needle-v2-shadow",
-        "dayAsset" : "rpm-needle-v2-shadow-day",
-        "offsetY" : 0.028268551236749116
+      "shadow": {
+        "asset": "rpm-needle-v2-shadow",
+        "dayAsset": "rpm-needle-v2-shadow-day",
+        "offsetY": 0.028268551236749116
       },
-      "signal" : "rpm",
-      "type" : "f82sprite",
-      "w" : 26,
-      "x" : 1281,
-      "y" : 124,
-      "z" : 2
+      "signal": "rpm",
+      "type": "f82sprite",
+      "w": 29.64,
+      "x": 1295.18,
+      "y": 84.22,
+      "z": 2
     },
     {
-      "asset" : "fuel-face",
-      "h" : 251,
-      "id" : "fuel_face",
-      "nightAsset" : "fuel-face-night",
-      "own" : true,
-      "type" : "f82sprite",
-      "w" : 249,
-      "x" : 124,
-      "y" : 379,
-      "z" : 1
+      "asset": "fuel-face",
+      "h": 276.1,
+      "id": "fuel_face",
+      "nightAsset": "fuel-face-night",
+      "own": true,
+      "type": "f82sprite",
+      "w": 273.9,
+      "x": 19.2,
+      "y": 348.4,
+      "z": 1
     },
     {
-      "asset" : "fuel-needle-v2",
-      "curve" : [
+      "asset": "fuel-needle-v2",
+      "curve": [
         [
           0,
           -54
@@ -157,47 +157,47 @@
           54
         ]
       ],
-      "glass" : {
-        "asset" : "fuel-needle-v2-glass",
-        "nightAsset" : "fuel-needle-v2-glass-night",
-        "outward" : -1
+      "glass": {
+        "asset": "fuel-needle-v2-glass",
+        "nightAsset": "fuel-needle-v2-glass-night",
+        "outward": -1
       },
-      "h" : 141,
-      "id" : "fuel_needle",
-      "nightAsset" : "fuel-needle-v2-night",
-      "own" : true,
-      "pivot" : [
+      "h": 155.1,
+      "id": "fuel_needle",
+      "nightAsset": "fuel-needle-v2-night",
+      "own": true,
+      "pivot": [
         12,
         102
       ],
-      "shadow" : {
-        "asset" : "fuel-needle-v2-shadow",
-        "dayAsset" : "fuel-needle-v2-shadow-day",
-        "offsetX" : 0.20833333333333334,
-        "offsetY" : 0.014184397163120567
+      "shadow": {
+        "asset": "fuel-needle-v2-shadow",
+        "dayAsset": "fuel-needle-v2-shadow-day",
+        "offsetX": 0.20833333333333334,
+        "offsetY": 0.014184397163120567
       },
-      "signal" : "fuel",
-      "type" : "f82sprite",
-      "w" : 24,
-      "x" : 240,
-      "y" : 433,
-      "z" : 2
+      "signal": "fuel",
+      "type": "f82sprite",
+      "w": 26.4,
+      "x": 146.8,
+      "y": 407.8,
+      "z": 2
     },
     {
-      "asset" : "oil-face",
-      "h" : 251,
-      "id" : "oil_face",
-      "nightAsset" : "oil-face-night",
-      "own" : true,
-      "type" : "f82sprite",
-      "w" : 249,
-      "x" : 1540,
-      "y" : 379,
-      "z" : 1
+      "asset": "oil-face",
+      "h": 276.1,
+      "id": "oil_face",
+      "nightAsset": "oil-face-night",
+      "own": true,
+      "type": "f82sprite",
+      "w": 273.9,
+      "x": 1619.2,
+      "y": 348.4,
+      "z": 1
     },
     {
-      "asset" : "oil-needle-v2",
-      "curve" : [
+      "asset": "oil-needle-v2",
+      "curve": [
         [
           70,
           -54
@@ -207,67 +207,67 @@
           54
         ]
       ],
-      "glass" : {
-        "asset" : "oil-needle-v2-glass",
-        "nightAsset" : "oil-needle-v2-glass-night",
-        "outward" : 1
+      "glass": {
+        "asset": "oil-needle-v2-glass",
+        "nightAsset": "oil-needle-v2-glass-night",
+        "outward": 1
       },
-      "h" : 141,
-      "id" : "oil_needle",
-      "nightAsset" : "oil-needle-v2-night",
-      "own" : true,
-      "pivot" : [
+      "h": 155.1,
+      "id": "oil_needle",
+      "nightAsset": "oil-needle-v2-night",
+      "own": true,
+      "pivot": [
         12,
         102
       ],
-      "shadow" : {
-        "asset" : "oil-needle-v2-shadow",
-        "dayAsset" : "oil-needle-v2-shadow-day",
-        "offsetX" : -0.20833333333333334,
-        "offsetY" : 0.014184397163120567
+      "shadow": {
+        "asset": "oil-needle-v2-shadow",
+        "dayAsset": "oil-needle-v2-shadow-day",
+        "offsetX": -0.20833333333333334,
+        "offsetY": 0.014184397163120567
       },
-      "signal" : "oil",
-      "type" : "f82sprite",
-      "w" : 24,
-      "x" : 1656,
-      "y" : 433,
-      "z" : 2
+      "signal": "oil",
+      "type": "f82sprite",
+      "w": 26.4,
+      "x": 1746.8,
+      "y": 407.8,
+      "z": 2
     },
     {
-      "cells" : 1,
-      "color" : [
+      "cells": 1,
+      "color": [
         229,
         231,
         219,
         255
       ],
-      "font" : "f82_gear",
-      "h" : 60,
-      "id" : "gear_selector",
-      "text" : "{{stage}}",
-      "type" : "atext",
-      "w" : 58,
-      "x" : 1265,
-      "y" : 499,
-      "z" : 3
+      "font": "f82_gear",
+      "h": 68,
+      "id": "gear_selector",
+      "text": "{{stage}}",
+      "type": "atext",
+      "w": 66,
+      "x": 1277,
+      "y": 512,
+      "z": 3
     },
     {
-      "cells" : 1,
-      "color" : [
+      "cells": 1,
+      "color": [
         229,
         231,
         219,
         255
       ],
-      "font" : "f82_gear",
-      "h" : 33,
-      "id" : "gear_number",
-      "text" : "{{gearInD}}",
-      "type" : "atext",
-      "w" : 32,
-      "x" : 1231,
-      "y" : 525,
-      "z" : 3
+      "font": "f82_gear",
+      "h": 38,
+      "id": "gear_number",
+      "text": "{{gearInD}}",
+      "type": "atext",
+      "w": 36,
+      "x": 1238,
+      "y": 541,
+      "z": 3
     }
   ]
 }

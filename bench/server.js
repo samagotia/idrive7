@@ -59,7 +59,8 @@ const releaseFile = path.join(APP_DIR, 'release.json');
 const release = APP_ID === 'samagotia_clusters' ? JSON.parse(fs.readFileSync(releaseFile, 'utf8')) : null;
 // Keep the existing Mac settings and edited F8X layout when switching to the standalone identity.
 const DATA_ID = APP_ID === 'samagotia_clusters' ? 'cluster_themes' : APP_ID;
-const DATA_DIR = path.join(__dirname, '.data', DATA_ID);
+// An isolated comparison must not replace the user's saved sizing/layout draft.
+const DATA_DIR = process.env.BENCH_DATA_DIR ? path.resolve(process.env.BENCH_DATA_DIR) : path.join(__dirname, '.data', DATA_ID);
 const STAGE = path.join(ROOT, 'dist', release ? release.id : APP_ID);
 const studio = APP_ID === 'samagotia_clusters'
     ? require('./studio-routes')({ root: ROOT, appDir: APP_DIR, dataDir: DATA_DIR, stage: STAGE, release })

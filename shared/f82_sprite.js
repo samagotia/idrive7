@@ -78,6 +78,43 @@ const infoWidgets = [
     infoWidget('f82_trip_distance', 'f82TripDistance', 974, 658, 108, 'right'),
 ];
 
+// Place the LCD information from the actual dial hubs, so an enlarged or
+// repositioned face does not leave its speed/info column behind. Bitmap info
+// glyphs retain their native dimensions; the GPU speed figures scale uniformly.
+function readoutWidgetsFor(layout, digitalSpeed, readAsset, nativeStrip) {
+    const widgets = layout && layout.widgets;
+    const speed = widgets && widgets.find((w) => w.type === 'f82sprite' && w.signal === 'speed');
+    const rpm = widgets && widgets.find((w) => w.type === 'f82sprite' && w.signal === 'rpm');
+    const face = widgets && widgets.find((w) => w.type === 'f82sprite' && w.id === 'speed_face');
+    if (!speed || !rpm || !face || typeof readAsset !== 'function') {
+        return (digitalSpeed ? digitalSpeedWidgets.concat(Object.assign({}, infoClock, { y: 562 }))
+            : [infoAmbient, infoClock]).concat(infoWidgets).map((w) => Object.assign({}, w));
+    }
+    const a = readAsset(speed.asset), b = readAsset(rpm.asset), f = readAsset(face.asset);
+    const center = (speed.x + speed.pivot[0] * speed.w / a.w + rpm.x + rpm.pivot[0] * rpm.w / b.w) / 2;
+    const scale = Math.min(face.w / f.w, face.h / f.h);
+    const y = Math.round(face.y + face.h - 42 * scale);
+    const numberW = digitalSpeedWidgets[0].w * scale;
+    const numberH = digitalSpeedWidgets[0].h * scale;
+    const clockY = digitalSpeed ? Math.ceil(y + numberH) + 4 : y + 34;
+    const infoY = nativeStrip && digitalSpeed ? Math.min(610, clockY + 34) : clockY + 34;
+    const footerY = infoY + 36;
+    const shiftX = center - 967;
+    let top;
+    if (digitalSpeed) {
+        top = [Object.assign({}, digitalSpeedWidgets[0], {
+            x: Math.round(center - 75 * scale), y, w: numberW, h: numberH,
+        }), Object.assign({}, digitalSpeedWidgets[1], {
+            x: Math.round(center + 38 * scale), y: Math.round(y + numberH - digitalSpeedWidgets[1].h),
+        }), Object.assign({}, infoClock, { x: Math.round(infoClock.x + shiftX), y: clockY })];
+    } else top = [Object.assign({}, infoAmbient, { x: Math.round(infoAmbient.x + shiftX), y }),
+        Object.assign({}, infoClock, { x: Math.round(infoClock.x + shiftX), y: clockY })];
+    return top.concat(infoWidgets.map((w) => Object.assign({}, w, {
+        x: Math.round(w.x + shiftX),
+        y: w.id === 'f82_info' ? infoY : w.id === 'f82_odometer' || w.id === 'f82_trip_distance' ? footerY + 30 : footerY,
+    })));
+}
+
 function infoPage(page, digitalSpeed) {
     return !digitalSpeed && (page === 'outsideTemperature' || page === 'time') ? 'off' : page;
 }
@@ -188,7 +225,10 @@ function shadowOf(needle) {
 }
 
 function shadowOffset(needle) {
-    return [Math.round(needle.w * (needle.shadow.offsetX || 0)), Math.round(needle.h * needle.shadow.offsetY)];
+    // Round mirrored half-pixel offsets with equal magnitude. Math.round by
+    // itself sends +5.5 to +6 but -5.5 to -5 after a uniform gauge enlargement.
+    const round = (value) => Math.sign(value) * Math.round(Math.abs(value));
+    return [round(needle.w * (needle.shadow.offsetX || 0)), round(needle.h * needle.shadow.offsetY)];
 }
 
 function shadowOpacity(degrees, dx, dy) {
@@ -253,6 +293,6 @@ function shiftTrackOf(face, needle) {
     };
 }
 
-const f82Sprite = { angle, rpmAngle, isSequential, gearReadout, gearWidget, digitalSpeedWidgets, infoAmbient, infoClock, infoWidgets, validate, lightOf, backlightAsset, oilScaleWidgets, lowerArcOf, shadowOf, shadowOffset, shadowOpacity, glassOf, glassPose,
+const f82Sprite = { angle, rpmAngle, isSequential, gearReadout, gearWidget, digitalSpeedWidgets, infoAmbient, infoClock, infoWidgets, readoutWidgetsFor, validate, lightOf, backlightAsset, oilScaleWidgets, lowerArcOf, shadowOf, shadowOffset, shadowOpacity, glassOf, glassPose,
     infoPage, infoPageOptions, previewShiftLimit, shiftBand, shiftBuildCount, shiftTrackOf, SHIFT_TRACK_START_RPM, SHIFT_OIL_WARM_C };
 if (typeof module !== 'undefined') module.exports = f82Sprite;

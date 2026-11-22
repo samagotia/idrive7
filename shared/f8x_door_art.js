@@ -27,7 +27,7 @@ function keyFor(state, lighting, w = W, h = H) {
     return [w, h, lighting === 'night' ? 'night' : 'day', s.layout || 'unknown',
         PANELS.map((key) => s.panels[key] ? '1' : '0').join('')].join(':');
 }
-function widgetsFor(layout, readAsset = assetOf) {
+function widgetsFor(layout, readAsset = assetOf, bottom = 720) {
     const rpm = pivotOf(layout, 'rpm', readAsset), oil = pivotOf(layout, 'oil', readAsset);
     const face = layout && Array.isArray(layout.widgets) && layout.widgets.find((w) => w.id === 'rpm_face' && w.type === 'f82sprite');
     const texture = face && readAsset(face.asset);
@@ -35,15 +35,16 @@ function widgetsFor(layout, readAsset = assetOf) {
     const sy = face.h / texture.h;
     const column = Math.round(rpm.x + (oil.x - rpm.x) * 0.62);
     const widget = { id: 'f8x_door_diagram', type: 'icon', doorRole: 'diagram', own: true,
-        x: column - W / 2, y: Math.round(rpm.y + 233 * sy), w: W, h: H, z: 4 };
-    if (widget.x < 0 || widget.y < 0 || widget.x + W > 1920 || widget.y + H > 720) return [];
+        x: column - W / 2, y: Math.min(Math.round(rpm.y + 233 * sy), bottom - H), w: W, h: H, z: 4 };
+    if (widget.x < 0 || widget.y < 0 || widget.x + W > 1920 || widget.y + H > bottom) return [];
     // Moved/scaled layouts must leave real room beyond both gauge rims. Reject
     // an overlapping diagram rather than painting over the tachometer/oil face.
     for (const id of ['rpm_face', 'oil_face']) {
         const dial = layout.widgets.find((w) => w.id === id && w.type === 'f82sprite');
         if (!dial) return [];
         const t = readAsset(dial.asset);
-        if (!t || ![dial.x, dial.y, dial.w, dial.h].every(Number.isFinite)) return [];
+        if (!t || ![dial.x, dial.y, dial.w, dial.h].every(Number.isFinite)
+            || dial.x < 0 || dial.y < 0 || dial.x + dial.w > 1920 || dial.y + dial.h > bottom) return [];
         const cx = dial.x + dial.w / 2, cy = dial.y + dial.h / 2;
         const x = Math.max(widget.x, Math.min(widget.x + W, cx));
         const y = Math.max(widget.y, Math.min(widget.y + H, cy));

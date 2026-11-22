@@ -184,7 +184,7 @@ async function run() {
         assert(underlay, 'F8X includes an opaque floor before background image upload');
         const underlayLayer = underlay.c.layers.get(underlay.ref);
         assert.equal(underlayLayer.kind, 'effect', 'the opaque floor requires no image upload');
-        assert.deepEqual([underlayLayer.opts.x, underlayLayer.opts.y, underlayLayer.opts.w, underlayLayer.opts.h], [0, 0, 1920, 720]);
+        assert.deepEqual([underlayLayer.opts.x, underlayLayer.opts.y, underlayLayer.opts.w, underlayLayer.opts.h], [0, 0, 1920, 646]);
         assert.equal(underlayLayer.opts.klass, 'ambient');
         assert.equal(underlayLayer.opts.z, -1);
         assert(!underlayLayer.opts.exclusive, 'native BMW warnings retain priority');
@@ -199,6 +199,39 @@ async function run() {
         }
         assert(produced.some((w) => w.doorRole), 'retain live opening diagram');
         assert(produced.some((w) => w.gearRecommendation), 'retain sequential shift recommendation');
+        const gaugeIds = ['speed_face', 'speed_needle', 'rpm_face', 'rpm_needle', 'fuel_face', 'fuel_needle', 'oil_face', 'oil_needle'];
+        const dialGeometry = () => gaugeIds.map((id) => {
+            const w = hud.widgets.get(id).w;
+            return [id, w.x, w.y, w.w, w.h, w.pivot];
+        });
+        const bundled = JSON.parse(fs.readFileSync(path.join(__dirname, '../apps/samagotia_clusters/cluster/layouts/our_m4.json')));
+        const originalGeometry = gaugeIds.map((id) => {
+            const w = bundled.widgets.find((w) => w.id === id);
+            return [id, w.x, w.y, w.w, w.h, w.pivot];
+        });
+        assert.deepEqual(dialGeometry(), originalGeometry, 'every dial and blade keeps its exact shipped size, position and pivot');
+        const assertStripClear = () => {
+            for (const socket of hud.clients) for (const layer of socket.layers.values()) {
+                if (layer.kind === 'asset') continue;
+                assert(layer.opts.y + layer.opts.h <= 646, 'every actual drawable ends above BMW strip, even when hidden');
+            }
+            assert(!hud.widgets.has('f82_odometer') && !hud.widgets.has('f82_footer_rule'), 'no empty footer rectangles cover BMW strip');
+            const bg = hud.widgets.get('backdrop'), wireLayer = bg.c.layers.get(bg.ref);
+            assert.equal(wireLayer.ih, 258);
+            assert.equal(wireLayer.opts.h, 645, 'crop complete source rows at original scale');
+            const source = hud._f82Asset('background');
+            assert(wireLayer.image.equals(Buffer.from(source.rgba, 'base64').slice(0, source.w * 258 * 4)),
+                'Day background is the exact original pixel prefix, never a squashed full image');
+        };
+        assertStripClear();
+        settings.set('f8xNativeBottomStrip', false);
+        assert.equal(hud.widgets.get('f8x_panel_underlay').w.h, 720);
+        assert(hud.widgets.has('f82_odometer'), 'Off restores the original footer for parked comparison');
+        assert.equal(hud.widgets.get('backdrop').w.sourceRows, undefined);
+        assert.deepEqual(dialGeometry(), originalGeometry, 'comparison toggle does not change dial geometry');
+        settings.set('f8xNativeBottomStrip', true);
+        assertStripClear();
+        assert.deepEqual(dialGeometry(), originalGeometry);
         await delay(1650);
         assert(active(), 'quiet but readable zero values keep F8X active');
         assert.equal(hud.car.data().demo, false);

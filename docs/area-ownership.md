@@ -4,6 +4,9 @@ The user requested that delegated agents implement changes and retain responsibi
 
 | Area | Responsible agent | Contract and evidence |
 | --- | --- | --- |
+| F8X dial size, proportions and spacing | `/root/resize_f8x_layout` | Bundled `our_m4.json`; exact uniform scale and silhouette checks |
+| F8X readout placement around the dials | `/root/resize_f8x_readouts` | `readoutWidgetsFor`; bitmap alignment and artwork-clearance checks |
+| Independent sizing and geometry review | `/root/resize_f8x_review` | Sizing, needle sweep, warning clearance and mirrored-shadow checks |
 | BMW-only turn-telltale policy and sequential gear-recommendation arrows | `/root/own_turn_indicators` | [Owner notes](turn-indicator-ownership.md); turn and gear-recommendation tests |
 | BMW-only parking-brake policy and shared gauge geometry | `/root/own_parking_brake` | [Owner notes](parking-brake-ownership.md); shared gauge geometry and no-duplicate composition tests |
 | Full-panel backing and compositor/client coverage | `/root/own_panel_compositing` | `shared/f8x_panel_backing.js`; panel-underlay, wire-backing and parked fallback tests |

@@ -163,11 +163,13 @@ class F8xPage {
                 selected ? COLOURS.blueLight : COLOURS.muted, { literal: true });
             cv.target(x, y, width, height, () => this.set('hudLayout', value), 'design:' + value, 16);
         });
+        this.drawSetting(cv, 'f8xNativeBottomStrip', CONTENT_X, 310, CONTENT_WIDTH);
     }
 
     drawReadouts(cv) {
         cv.text('F8X readouts', CONTENT_X, 74, 26, COLOURS.text, { font: 'bold', literal: true });
-        const keys = ['f82DistanceUnits', 'f82DigitalSpeed', 'f82ShowGearInD', 'f82InfoPage', 'f82Footer'];
+        const keys = ['f82DistanceUnits', 'f82DigitalSpeed', 'f82ShowGearInD', 'f82InfoPage'];
+        if (!this.get('f8xNativeBottomStrip')) keys.push('f82Footer');
         if (this.get('f82InfoPage') === 'date') keys.push('f82DateFormat');
         keys.forEach((key, index) => this.drawSetting(cv, key, CONTENT_X, 92 + index * 58, CONTENT_WIDTH));
         cv.text(fitText(cv, this.runtime.infoStatus(), CONTENT_WIDTH, 15), CONTENT_X, 460, 15, COLOURS.muted, { literal: true });

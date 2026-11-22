@@ -12,6 +12,7 @@ const textRaster = require('./f8x_text');
 const { paintIcon } = require('./f8x_icons');
 const shaders = require('./f8x_shaders');
 const panelBacking = require('./f8x_panel_backing');
+const panelStrip = require('./f8x_panel_strip');
 const Car = require('./f8x_vehicle');
 const { InfoData } = require('./f8x_info_data');
 const { CarFormats } = require('./f8x_car_formats');
@@ -517,6 +518,7 @@ class F8xRuntime {
             return this.label + ' off' + (this.parkedTestNotice ? ': ' + this.parkedTestNotice + '.' : ':') + " BMW's own cluster shows";
         }
         return this.label + ' on: ' + this._layoutLabel(this.activeName) + ', ' + this._layerCount(this._layerRefs().length)
+            + (this.f82Readouts && this.setting('f8xNativeBottomStrip') ? ', BMW bottom strip clear (test)' : '')
             + (this.pixelBytes ? ', ' + mib(this.pixelBytes) + ' of 16 MiB pixels' : '')
             + (this.car.data().demo ? ', demo data' : '') + this._drawnNote();
     }
@@ -865,22 +867,33 @@ class F8xRuntime {
             });
             shown = f82Sprite.oilScaleWidgets(shown, this._oilScaleInfo().scale,
                 this._effectiveFormat('units') === 'us', (id) => this._f82Asset(id));
-            if (this.setting('f82DigitalSpeed')) {
-                shown = shown.concat(f82Sprite.digitalSpeedWidgets, Object.assign({}, f82Sprite.infoClock, { y: 562 }));
-            } else shown.push(f82Sprite.infoAmbient, f82Sprite.infoClock);
+            const nativeStrip = this.setting('f8xNativeBottomStrip');
+            shown = shown.concat(f82Sprite.readoutWidgetsFor({ widgets: shown }, this.setting('f82DigitalSpeed'),
+                (id) => this._f82Asset(id), nativeStrip));
             const cruise = cruiseArt.widgetsFor({ widgets: shown });
             const lowerArc = f82Sprite.lowerArcOf({ widgets: shown }, (id) => this._f82Asset(id));
-            shown = shown.concat(f82Sprite.infoWidgets, cruise,
+            const bottom = nativeStrip ? panelStrip.BOTTOM : this.size[1];
+            shown = shown.concat(cruise,
                 gearRecommendationArt.widgetsFor({ widgets: shown }),
-                lowerArc ? [lowerArc] : [], fuelWarningArt.widgetsFor({ widgets: shown }), doorArt.widgetsFor({ widgets: shown }));
+                lowerArc ? [lowerArc] : [],
+                fuelWarningArt.widgetsFor({ widgets: shown }, (id) => this._f82Asset(id), bottom),
+                doorArt.widgetsFor({ widgets: shown }, (id) => this._f82Asset(id), bottom));
         }
         // At the z level below the blades, stack the glass over the cast shadows.
         const sprites = shown.filter((w) => w.type === 'f82sprite');
         const tach = sprites.find((w) => w.signal === 'rpm');
         const track = tach && sprites.find((w) => w.shiftTrack);
-        const layers = shown.concat(track ? [f82Sprite.shiftTrackOf(track, tach)] : [],
+        let layers = shown.concat(track ? [f82Sprite.shiftTrackOf(track, tach)] : [],
             sprites.filter((w) => w.shadow).map(f82Sprite.shadowOf),
             sprites.filter((w) => w.glass).map(f82Sprite.glassOf));
+        if (this.f82Readouts && this.setting('f8xNativeBottomStrip')) {
+            try { layers = panelStrip.prepare(layers, (id) => this._f82Asset(id)); }
+            catch (error) {
+                this.problem = error.message;
+                this.log.warn(error.message + '; showing BMW cluster');
+                return;
+            }
+        }
         this.needsFuel = shown.some((widget) => widget.signal === 'fuel');
         // plan the layers first (a sheet's size is only known once every member is placed), then make them
         // in that order: within a class and z, cluster-render puts the newer layer on top. Small sheets
@@ -1019,7 +1032,8 @@ class F8xRuntime {
         if (image.w !== sprite.w || image.h !== sprite.h || pixels.length !== image.w * image.h * 4) {
             throw new Error('bad F82 image size for ' + id);
         }
-        x.c.pixels(x.ref, null, pixels);
+        x.c.pixels(x.ref, null, x.w.sourceRows === undefined ? pixels
+            : pixels.slice(0, image.w * x.w.sourceRows * 4));
     }
 
     _onF82Light(value) {
@@ -1081,7 +1095,7 @@ class F8xRuntime {
                         }
                     } else base.previewNeedle = true;
                 }
-                ref = c.image(Object.assign({ iw: sprite.w, ih: sprite.h }, base));
+                ref = c.image(Object.assign({ iw: sprite.w, ih: w.sourceRows === undefined ? sprite.h : w.sourceRows }, base));
             } else if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
             else ref = c.effect(Object.assign({ fs: shaders[w.type] }, base));
             if (!ref) { this.log.warn('widget "' + w.id + '": layer refused'); return; }

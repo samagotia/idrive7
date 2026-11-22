@@ -2,7 +2,7 @@
 
 Standalone BMW iDrive 7 instrument-cluster app featuring **F8X**. App ID: `samagotia_clusters`.
 
-![F8X](docs/preview-day.jpg)
+![F8X — local preview with simulated signals](docs/preview-enlarged-day.png)
 
 ## MGU Store installation
 
@@ -13,6 +13,10 @@ Add this GitHub repository as a source in MGU Store. The binary catalog is:
 `https://github.com/samagotia/idrive7/releases/download/catalog/catalog.json`
 
 The app starts with the **BMW cluster** selected and demo data off on the car. Select F8X only while parked for initial checks. Missing/stale speed or RPM, or renderer disconnection, returns to BMW and requires manual reselection. Live readers are source mapped; G82 reception, cold-limit tracking and native BMW warning takeover remain unverified on the car.
+
+## Parked-test update 0.16.7
+
+Main dials are 14% larger and fuel/oil gauges 10% larger, with wider spacing and matching needle geometry. **Designs → Keep BMW bottom strip clear (test)** defaults to On; this preserves the native lower band as an experimental workaround for two black rectangles reported on M clusters. Switching it Off keeps the same enlarged dials and restores full-height coverage for comparison. The workaround and physical trim clearance still require a parked G82 check. [Comparison instructions](docs/native-m-boxes-parked-test.md).
 
 ## Mac preview
 
@@ -34,4 +38,4 @@ for test in bench/test*.js; do node "$test" || exit 1; done
 
 The builder creates a local staging placeholder and removes it before packaging. No BMW SDK, private keys, coding backups or personal preview settings are distributed. The Store supplies the real SDK on the head unit.
 
-Original licences and credits are preserved in [NOTICE](NOTICE) and [LICENSE](LICENSE), including MPL-covered renderer-client source in `shared/cluster_render_client.js`. Full features and limitations: [app documentation](apps/samagotia_clusters/README.md). [Local validation](docs/validation-0.16.6.json).
+Original licences and credits are preserved in [NOTICE](NOTICE) and [LICENSE](LICENSE), including MPL-covered renderer-client source in `shared/cluster_render_client.js`. Full features and limitations: [app documentation](apps/samagotia_clusters/README.md). [Local validation](docs/validation-0.16.7.json).

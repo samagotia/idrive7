@@ -44,6 +44,7 @@ vm.runInNewContext(fs.readFileSync(path.join(root, 'shared/f8x_runtime.js'), 'ut
     require(name) {
         if (name === './f82_sprite') return sprite;
         if (name === './f8x_panel_backing') return require('../shared/f8x_panel_backing');
+        if (name === './f8x_panel_strip') return require('../shared/f8x_panel_strip');
         if (name === './f8x_gear_recommendation_art') return require('../shared/f8x_gear_recommendation_art');
         if (name === './f8x_cruise_art') return { widgetsFor: (input) => cruise.widgetsFor(input, read) };
         if (name === './f8x_fuel_warning_art' || name === './f8x_door_art') return { widgetsFor: () => [] };

@@ -4,11 +4,12 @@
   "description": "Custom instrument cluster designs for BMW iDrive 7. Includes F8X with live vehicle data and parked-test fallback to the BMW cluster.",
   "vendor": "Samagotia",
   "loggingId": "SMGC",
-  "version": "0.16.6",
+  "version": "0.16.7",
   "iconGlyph": "SMG",
   "shared": [
     "f8x_runtime.js",
     "f8x_panel_backing.js",
+    "f8x_panel_strip.js",
     "f8x_gear_recommendation.js",
     "f8x_gear_recommendation_art.js",
     "f8x_motion.js",
@@ -117,6 +118,12 @@
     "tankLitres": 65
   },
   "settings": [
+    {
+      "key": "f8xNativeBottomStrip",
+      "label": "Keep BMW bottom strip clear (test)",
+      "type": "bool",
+      "default": true
+    },
     {
       "key": "hudLayout",
       "label": "Cluster design",

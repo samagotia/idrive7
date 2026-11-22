@@ -139,6 +139,13 @@ for (const needle of needles) {
     assert(uploads.at(-1).equals(Buffer.from(base.rgba, 'base64')), 'Night retains its original shadow pixels');
 }
 // Mirrored auxiliary geometry keeps the same shadow strength at mirrored angles.
+// Enlarging a 24 px shaft by 1.10 puts its lateral offset exactly at ±5.5.
+// JavaScript Math.round alone maps those to +6/-5, which is visibly asymmetric.
+for (const side of [-1, 1]) {
+    const halfPixel = { w: 26.4, h: 155.1, shadow: { offsetX: side * 5 / 24, offsetY: 2 / 141 } };
+    assert.deepEqual(sprite.shadowOffset(halfPixel), [side * 6, 2],
+        'mirrored half-pixel offsets must round with the same magnitude');
+}
 const fuel = sprite.shadowOf(needles.find((w) => w.signal === 'fuel'));
 const oil = sprite.shadowOf(needles.find((w) => w.signal === 'oil'));
 for (const degrees of [-54, -27, 0, 27, 54]) {

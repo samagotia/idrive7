@@ -22,6 +22,7 @@
   ],
   "visibleSettings": [
     "hudLayout",
+    "f8xNativeBottomStrip",
     "units",
     "f8xOilScale",
     "f8xBacklightColour",
@@ -42,5 +43,5 @@
     "f8xVehicleLayout",
     "f8xSteeringSide"
   ],
-  "version": "0.16.6"
+  "version": "0.16.7"
 }

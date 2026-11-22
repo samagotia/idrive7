@@ -21,15 +21,20 @@ assert.equal(widgets.length, 2);
 assert.deepEqual(Array.from(widgets, (w) => w.warningRole), ['fuelReserveText', 'fuelReserveIcon']);
 const [text, pump] = widgets;
 assert.equal(text.text, 'Fuel reserve'); assert.equal(text.font, 'f82_info'); assert.equal(text.align, 'left');
-assert.deepEqual([text.x, text.y, text.w, text.h], [1138, 635, 190, 30]);
-assert(pump.x > 1490 && pump.x + pump.w < 1600, 'pump stays in the information column');
-assert(text.y > 620 && text.y + text.h < 690, 'message sits below the lower arc');
+assert.deepEqual([text.x, text.y, text.w, text.h], [1132, 667, 190, 30]);
+assert(pump.x > 1500 && pump.x + pump.w < 1700, 'pump stays in the information column');
+assert(text.y > 645 && text.y + text.h <= 720, 'full-height message sits below the enlarged lower arc');
+const stripWidgets = widgetsFor(layout, read, 646);
+assert.deepEqual(Array.from(stripWidgets, (w) => [w.x, w.y, w.w, w.h]), [[1499, 616, 190, 30], [1457, 610, 32, 36]],
+    'strip mode fits the message and compact pump beyond the lower arc');
+assert(stripWidgets.every((w) => w.y + w.h <= 646));
+assert.equal(pixelsFor(stripWidgets[1], 'day').length, 32 * 36 * 4);
 assert.equal(widgetsFor({ widgets: [] }, read).length, 0);
 const shifted = JSON.parse(JSON.stringify(layout));
-for (const w of shifted.widgets) { w.x -= 20; w.y += 5; }
+for (const w of shifted.widgets) { w.x -= 20; w.y -= 5; }
 const moved = widgetsFor(shifted, read);
-assert.equal(moved[0].x, text.x - 20); assert.equal(moved[0].y, text.y + 5);
-assert.equal(moved[1].x, pump.x - 20); assert.equal(moved[1].y, pump.y + 5);
+assert.equal(moved[0].x, text.x - 20); assert.equal(moved[0].y, text.y - 5);
+assert.equal(moved[1].x, pump.x - 20); assert.equal(moved[1].y, pump.y - 5);
 const pixel = (bytes, w, x, y) => Array.from(bytes.subarray((y * w + x) * 4, (y * w + x + 1) * 4));
 const pumpPixels = pixelsFor(pump, 'day');
 assert.equal(pumpPixels, pixelsFor(pump, 'day'), 'icon buffer is cached');

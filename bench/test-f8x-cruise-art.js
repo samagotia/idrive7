@@ -44,7 +44,8 @@ saved.widgets.filter((w) => ['speed_face', 'speed_needle'].includes(w.id)).forEa
     w.x = w.x * .8 + 25; w.y = w.y * .8 + 10; w.w *= .8; w.h *= .8;
 });
 const scaledMarker = checkGeometry(saved, 170)[0];
-assert.equal(scaledMarker.cruiseGeometry.rx, art.MARKER_RADIUS * .8);
+assert(Math.abs(scaledMarker.cruiseGeometry.rx - widgets[0].cruiseGeometry.rx * .8) < 1e-9,
+    'a saved scale is relative to the already enlarged source face');
 assert.deepEqual(art.widgetsFor({ widgets: [] }, readAsset), []);
 for (const w of widgets) {
     const green = art.pixelsFor(w, 'active'), amber = art.pixelsFor(w, 'standby');
