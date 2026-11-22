@@ -46,3 +46,6 @@ a { color: var(--accent); }
 body.only .designs, body.only #studio-editor, body.only .diagnostics { display: none; }
 body.only .preview-column { display: block; }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+
+/* Capture the logical panel at 1:1 when the preview chrome is hidden. */
+body.only main { max-width: none; margin: 0; }

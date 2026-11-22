@@ -61,3 +61,14 @@ Exterior temperature requests notification permission only (`s`). The connected 
 ## Opaque panel backing (0.16.2)
 
 The Day and Night backgrounds are opaque across the full 1920×720 panel. The painted falloff is composited over black in the asset so it keeps its appearance without exposing the BMW gauges and readouts underneath. The bake tool preserves this opacity. No exclusive layers, renderer ownership, warning-yield or takeover settings are changed. Off, stale speed/RPM, renderer disconnect and app shutdown still remove all our layers so the BMW display can return. Native warning takeover and the visible result still require a parked check on the car; an opaque background alone does not prove BMW warning visibility.
+
+
+## Native motion and settings load (0.16.3)
+
+On a native cluster-render backend, the app sends bounded rotation animation segments instead of interpolating every displayed needle frame in JavaScript. Needles and their companion layers share the segment; target changes are coalesced to at most ten batches per second and quantized to 0.1 degrees. This follows the public renderer protocol and the peer cluster's retiming strategy. Native real-time animation runs independently of app callbacks. No 60 fps measurement is claimed for the G82, and the service's host polling/flush setting does not by itself establish the native animation frame rate.
+
+The central iDrive settings page records a new canvas only on a visible change or user event, checking live diagnostics at most once per second. This guard precedes canvas recording because the kit's GPU-backed loop can call at display refresh regardless of the requested fallback rate. The existing mgu-render command path and software fallback are retained.
+
+Native animations stop for invalid data; recovery starts at the fresh reading. An asynchronously rejected animation disables native needle animation for that connection and falls back to direct poses. Backpressure defers new native targets until the connection drains. Off, stale speed/RPM, disconnect and shutdown still remove the custom display. The Mac preview retains its explicit simulated pose path.
+
+Parked G82 feedback reports stable display in BMW's normal cluster view and repeated stock/custom switching in M display view. Use the normal view for these tests; M-view compatibility and native BMW warning takeover are not established. Performance improvements are implemented and covered by Mac protocol tests, not yet measured on the car.

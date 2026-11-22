@@ -21,7 +21,7 @@ const { ParkingBrake } = require('./f8x_brake');
 const { RpmLimit } = require('./f8x_rpm_limit');
 const { Cruise } = require('./f8x_cruise');
 const cruiseArt = require('./f8x_cruise_art');
-const { NeedleMotion, framePlan } = require('./f8x_motion');
+const { NeedleMotion, NativeNeedleMotion, applyNativeRotation, framePlan } = require('./f8x_motion');
 const { widgetOf: brakeWidgetOf } = require('./f8x_brake_art');
 const { evaluateFuelWarning } = require('./f8x_fuel_warning');
 const fuelWarningArt = require('./f8x_fuel_warning_art');
@@ -35,6 +35,8 @@ const MAX_CONN = 4;
 const PIXEL_BYTES = 16 * 1024 * 1024;
 const SHEET_AREA_FRAC = 4;
 const TICK_MS = 50;
+// Match the peer cluster: bounded target changes, with native frames between.
+const F82_NATIVE_TARGET_HZ = 10;
 const PARKED_TEST_SIGNAL_MAX_AGE_MS = 1500;
 const TEXT_MS = 200;
 const F82_STARTUP_SECONDS = 15;
@@ -113,6 +115,7 @@ class F8xRuntime {
         this.f82SentAt = 0;
         this.f82NextFrameAt = null;
         this.f82Motion = new Map();
+        this.nativeF82Disabled = false;
         this.f82Light = 'day';
         this.f82TurnDirection = 'off';
         this.f82TurnChangedAt = 0;
@@ -313,7 +316,7 @@ class F8xRuntime {
 
     _wireClientEvents(c, ci) {
         const tag = ci ? ' [connection ' + (ci + 1) + ']' : '';
-        c.on('ready', () => { this.log.info('cluster-render ready' + tag + ' (backend=' + c.backend + ')'); if (ci === 0) this._rebuild(); else this._status(); });
+        c.on('ready', () => { this.log.info('cluster-render ready' + tag + ' (backend=' + c.backend + ')'); if (ci === 0) { this.nativeF82Disabled = false; this._rebuild(); } else this._status(); });
         c.on('disconnected', () => {
             this.log.warn('cluster-render disconnected' + tag + ', client will retry');
             if (this.parkedTest && this.activeName && this.activeName !== 'off') this._parkedTestFallback('renderer disconnected');
@@ -336,6 +339,7 @@ class F8xRuntime {
             this._statusSoon();
         });
         c.on('refused', (op, ref, reason) => {
+            if (op === 'animate' && this._nativeF82Motion()) this._nativeF82Refused();
             const w = this._widgetOf(ci, ref);
             this.log.warn('refused ' + op + ' on ' + ref + tag + (w ? ' (' + w + ')' : '') + ': ' + reason);
             if (!this.refused) this.refused = (w || op) + ': ' + reason;   // the first one, until the next rebuild
@@ -1140,18 +1144,41 @@ class F8xRuntime {
         });
     }
 
+    _nativeF82Refused() {
+        // A renderer may accept the protocol but reject an animation later.
+        // Stop every native track before falling back to fresh direct poses.
+        this.nativeF82Disabled = true;
+        this.f82Needles.forEach((x) => {
+            if (x.nativeRotate) x.c.stop(x.ref, x.nativeRotate);
+            x.nativeRotate = 0; x.nativeChange = null; x.last = undefined;
+        });
+        clearTimeout(this.f82Timer); this.f82Timer = null;
+        this.f82Motion.clear(); this.f82NextFrameAt = null;
+        const now = Date.now(), motionNow = motionClockMs();
+        this.f82Needles.forEach((x) => this._guard('animation fallback ' + x.w.id,
+            () => this._updateF82(x, now, true, motionNow)));
+        this.log.warn('native needle animation refused; using direct poses for this connection');
+    }
+
+    _nativeF82Motion() {
+        return !!(!this.nativeF82Disabled && this.client && this.client.backend && this.client.backend !== 'bench'
+            && process.env.M4_PREVIEW_ONLY !== '1' && typeof this.client.animate === 'function');
+    }
+
     _queueF82() {
-        if (this.f82Timer || !this.client.ready || !this.f82Needles.length) return;
-        const plan = framePlan(motionClockMs(), this.f82NextFrameAt);
+        if (this.f82Timer || !this.client.ready || !this.f82Needles.length
+            || (this._nativeF82Motion() && this.client.blocked)) return;
+        const native = this._nativeF82Motion();
+        const plan = framePlan(motionClockMs(), this.f82NextFrameAt, native ? F82_NATIVE_TARGET_HZ : undefined);
         this.f82Timer = setTimeout(() => {
             this.f82Timer = null;
-            if (this.stopped || !this.client.ready) return;
+            if (this.stopped || !this.client.ready || (native && this.client.blocked)) return;
             const now = Date.now(), motionNow = motionClockMs();
             this.f82NextFrameAt = motionNow > plan.nextAt ? motionNow + plan.interval : plan.nextAt;
             this.f82Needles.forEach((x) => this._guard('widget ' + x.w.id, () => {
                 if (this._updateF82(x, now, false, motionNow)) this.f82SentAt = now;
             }));
-            if (Array.from(this.f82Motion.values()).some((motion) => motion.moving(motionNow))) this._queueF82();
+            if (!native && Array.from(this.f82Motion.values()).some((motion) => motion.moving(motionNow))) this._queueF82();
         }, plan.delay);
     }
 
@@ -1160,7 +1187,8 @@ class F8xRuntime {
         if (!signal) return false;
         const auxShadow = shadowOnly && (signal === 'fuel' || signal === 'oil');
         const nightShadow = auxShadow && this.f82Light === 'night';
-        let degrees = null;
+        const native = this._nativeF82Motion();
+        let degrees = null, segment = null, current = null;
         if (!shadowOnly || this.f82Light === 'day' || nightShadow) {
             const test = signal === 'rpm' ? this._testRpm(now) : null;
             const raw = signal === 'rpm' ? (isNum(test) ? test : this.car.data().rpm) : this._raw(signal);
@@ -1169,11 +1197,15 @@ class F8xRuntime {
             const id = x.w.needleId || x.w.id;
             // All companion layers sample one motion at the same clock time.
             if (!this.f82Motion) this.f82Motion = new Map();
-            if (!this.f82Motion.has(id)) this.f82Motion.set(id, new NeedleMotion());
-            const drawn = this.f82Motion.get(id).sample(value, motionNow);
-            if (drawn !== null) degrees = Math.round(drawn * 100) / 100;
+            if (!this.f82Motion.has(id)) this.f82Motion.set(id, native ? new NativeNeedleMotion() : new NeedleMotion());
+            const motion = this.f82Motion.get(id);
+            const target = native && Number.isFinite(value) ? Math.round(value * 10) / 10 : value;
+            const drawn = motion.sample(target, motionNow);
+            segment = native ? motion.segment : null;
+            current = drawn;
+            if (drawn !== null) degrees = Math.round((segment ? segment.to : drawn) * 100) / 100;
         }
-        if (!force && degrees === x.last) return false;
+        if (!force && degrees === x.last && (!native || !segment || segment.change === x.nativeChange)) return false;
         x.last = degrees;
         // The sprite pixels remain resident. Only pose and visibility change.
         const pose = degrees === null ? { visible: false } : { visible: true, rotate: degrees };
@@ -1196,7 +1228,23 @@ class F8xRuntime {
                 pose.y = x.w.y + dy * (distance - 1);
             } else if (glassOnly) Object.assign(pose, f82Sprite.glassPose(degrees, x.w.glass.outward));
         }
-        x.c.set(x.ref, pose);
+        if (native) {
+            const left = segment ? Math.max(0, segment.at + segment.duration - motionNow) : 0;
+            if (degrees !== null && segment && !segment.snap && left > 0) {
+                // All companion rotations use one segment and clock sample.
+                // Keep a direct-pose fallback; one native animation ID per layer is reused.
+                pose.rotate = Math.round(current * 100) / 100;
+                x.c.set(x.ref, pose);
+                x.nativeRotate = applyNativeRotation(x.c, x.ref,
+                    [[0, pose.rotate], [left, degrees]], x.nativeRotate);
+                if (!x.nativeRotate) x.c.set(x.ref, { rotate: degrees });
+            } else {
+                if (x.nativeRotate) x.c.stop(x.ref, x.nativeRotate);
+                x.nativeRotate = 0;
+                x.c.set(x.ref, pose);
+            }
+            x.nativeChange = segment && segment.change;
+        } else x.c.set(x.ref, pose);
         return true;
     }
 

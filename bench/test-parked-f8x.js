@@ -80,7 +80,7 @@ class RenderSocket extends EventEmitter {
         if (bytes[4] !== 0x4a) return true;
         const op = JSON.parse(bytes.slice(5).toString('utf8'));
         if (op.op === 'hello') {
-            const hello = Buffer.from(JSON.stringify({ ev: 'hello', backend: 'bench' }));
+            const hello = Buffer.from(JSON.stringify({ ev: 'hello', backend: process.env.F8X_TEST_BACKEND || 'bench' }));
             const frame = Buffer.alloc(5 + hello.length);
             frame.writeUInt32LE(hello.length + 1, 0);
             frame[4] = 0x4a;
@@ -181,6 +181,12 @@ async function run() {
         await delay(1650);
         assert(active(), 'quiet but readable zero values keep F8X active');
         assert.equal(hud.car.data().demo, false);
+        if (process.env.F8X_TEST_BACKEND) {
+            rpm.set(4000);
+            await until(() => hud.client.layers && Array.from(hud.client.layers.values())
+                .some((layer) => layer.anims.size > 0), 'native RPM animation active');
+            assert(hud._nativeF82Motion(), 'the native branch is exercised before dropout tests');
+        }
 
         for (const [key, source] of [['speed', speed], ['RPM', rpm]]) {
             source.provider.values.delete(source.field);

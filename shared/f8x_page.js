@@ -8,6 +8,7 @@ const { listSheet } = require('./kit/sheet');
 const f82Sprite = require('./f82_sprite');
 
 const WIDTH = 1600, HEIGHT = 520;
+const LIVE_REFRESH_MS = 1000;
 const CONTENT_X = 300, CONTENT_WIDTH = 1284;
 const COLOURS = {
     background: '#05070a', text: '#eef2f8', muted: '#8a96a8', line: '#ffffff12',
@@ -26,6 +27,10 @@ class F8xPage {
         this.runtime = runtime;
         this.tab = 'designs';
         this.loop = null;
+        this.needsPaint = true;
+        this.lastCheckAt = null;
+        this.nextCheckAt = 0;
+        this.lastPaintKey = null;
     }
 
     start() {
@@ -36,7 +41,10 @@ class F8xPage {
         this.render();
     }
 
-    kick() { if (this.loop && this.loop.kick) this.loop.kick(); }
+    kick() {
+        this.needsPaint = true;
+        if (this.loop && this.loop.kick) this.loop.kick();
+    }
     get(key) { return this.runtime.setting(key); }
     item(key) { return this.ctx.settings.item(key); }
     set(key, value) {
@@ -89,6 +97,21 @@ class F8xPage {
     }
 
     render() {
+        // GPU-backed ctx.loop runs at screen refresh even when its requested
+        // fallback rate is lower. Gate before recording the large settings
+        // canvas; display.js keeps the last frame alive between changes.
+        const now = Date.now();
+        if (!this.needsPaint && this.lastCheckAt !== null && now >= this.lastCheckAt && now < this.nextCheckAt) return;
+        this.lastCheckAt = now;
+        this.nextCheckAt = now + LIVE_REFRESH_MS;
+        const live = this.tab === 'readouts' ? this.runtime.infoStatus()
+            : this.tab === 'vehicle' ? this.runtime.doorStatusText()
+                : this.tab === 'settings' ? this.runtime.rpmLimitDetails() : '';
+        const key = JSON.stringify([this.tab, this.get('hudLayout'), this.runtime.activeName,
+            this.runtime.lastStatus, this.runtime.rpmLimitStatus(), live]);
+        if (!this.needsPaint && key === this.lastPaintKey) return;
+        this.needsPaint = false;
+        this.lastPaintKey = key;
         const cv = this.ctx.canvas(WIDTH, HEIGHT);
         const bottom = G.pageBottom(cv);
         cv.clear(COLOURS.background);

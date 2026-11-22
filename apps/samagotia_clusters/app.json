@@ -4,7 +4,7 @@
   "description": "Custom instrument cluster designs for BMW iDrive 7. Includes F8X with live vehicle data and parked-test fallback to the BMW cluster.",
   "vendor": "Samagotia",
   "loggingId": "SMGC",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "iconGlyph": "SMG",
   "shared": [
     "f8x_runtime.js",

@@ -17,8 +17,8 @@ const needles = layout.widgets.filter((w) => w.signal && w.shadow);
 assert.equal(needles.length, 4);
 
 const values = { fuel: 0.5, oil: 120, speed: 90, rpm: 3000 };
-const runtime = { f82Light: 'day', _raw: (signal) => values[signal], _testRpm: () => null,
-    car: { data: () => ({ rpm: values.rpm, condition: 2 }) } };
+const runtime = Object.assign(Object.create(runtimeModule.exports.prototype), { f82Light: 'day', _raw: (signal) => values[signal], _testRpm: () => null,
+    car: { data: () => ({ rpm: values.rpm, condition: 2 }) } });
 const record = (w) => {
     const poses = [];
     return { w, ref: 1, last: null, poses, c: {

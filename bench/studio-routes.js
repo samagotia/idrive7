@@ -50,8 +50,7 @@ module.exports = ({ root, appDir, dataDir, stage, release }) => {
         if (get && url === '/studio.js') return file(res, path.join(__dirname, 'studio.js'), 'text/javascript; charset=utf-8');
         const photo = /^\/design-image\/([a-z0-9_]+)\.png$/.exec(url);
         if (get && photo && (originals.has(photo[1]) || photo[1] === 'f82')) {
-            const image = photo[1] === 'our_m4' ? 'f82' : photo[1];
-            return file(res, path.join(root, 'docs', 'images', 'cluster-' + image + '.png'), 'image/png');
+            return file(res, path.join(root, 'docs', 'preview-day.jpg'), 'image/jpeg');
         }
         if (url !== '/studio-layout') return false;
         try {
