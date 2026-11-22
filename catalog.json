@@ -4,7 +4,7 @@
     {
       "id": "samagotia_clusters",
       "kind": "app",
-      "version": "0.16.4",
+      "version": "0.16.5",
       "title": "Samagotia Clusters",
       "description": "Custom instrument cluster designs for BMW iDrive 7. Includes F8X with live vehicle data and parked-test fallback to the BMW cluster.",
       "author": "Samagotia",
@@ -16,10 +16,10 @@
       },
       "uninstallable": true,
       "artifact": {
-        "name": "samagotia_clusters@0.16.4.tgz",
-        "size": 5626159,
-        "sha256": "6d7e56cb2414ebe560debd3b4a348e71ebd179e82b69b61c44d4296fe9e4c7c1",
-        "url": "https://github.com/samagotia/idrive7/releases/download/catalog/samagotia_clusters@0.16.4.tgz"
+        "name": "samagotia_clusters@0.16.5.tgz",
+        "size": 5626154,
+        "sha256": "d689d85c0377ae4492f0db83e9ab8dce2fbc8ecc527b3572f6179342452644d3",
+        "url": "https://github.com/samagotia/idrive7/releases/download/catalog/samagotia_clusters@0.16.5.tgz"
       }
     }
   ]

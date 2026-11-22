@@ -88,7 +88,7 @@ async function run() {
         const rpmProvider = providers.get(rpmIface), speedProvider = providers.get(speedIface);
         const rpmOptions = optionCalls.find((call) => call.iface === rpmIface).options;
         const speedOptions = optionCalls.find((call) => call.iface === speedIface).options;
-        assert.equal(rpmOptions.pollMs, 50); assert.equal(speedOptions.pollMs, 500);
+        assert.equal(rpmOptions.pollMs, 10); assert.equal(speedOptions.pollMs, 500);
         assert.equal(rpmOptions.pollFields.length, 1); assert.equal(rpmOptions.pollFields[0], rpmField);
         assert.equal(speedOptions.pollFields.length, 1); assert.equal(speedOptions.pollFields[0], speedField);
         assert.equal(rpmOptions.readTimeoutMs, 500); assert.equal(speedOptions.readTimeoutMs, 500);
@@ -97,11 +97,13 @@ async function run() {
         const tempReadsAtStart = reads.filter((read) => read.field === tempField).length;
         assert.equal(tempReadsAtStart, 1, 'temperature keeps its existing initial read');
 
-        await advance(49);
+        await advance(9);
         values[rpmField] = { actualValueRPMEngineCrankshaft: 8000 };
         assert.equal(car.data().rpm, 0, 'a new provider value is not invented before a read');
-        await advance(50);
-        assert.equal(car.data().rpm, 2000, 'the next 50 ms getter acquires the new RPM');
+        await advance(10);
+        assert.equal(car.data().rpm, 2000, 'the first 10 ms getter acquires the new RPM');
+        assert.equal(reads.filter((read) => read.field === rpmField).length, 2,
+            'one initial read and one 10 ms periodic read');
         assert.equal(car.data().speed, 0);
         assert.equal(reads.filter((read) => read.field === speedField).length, 1,
             'RPM polling does not accelerate the speed heartbeat');
@@ -109,12 +111,12 @@ async function run() {
         // Hold an old getter in flight. New notices must take precedence, and
         // repeated poll ticks must not create a queue of outstanding requests.
         rpmProvider.blockField = rpmField;
-        await advance(100);
+        await advance(20);
         assert.equal(rpmProvider.pending.length, 1);
         const readCount = reads.filter((read) => read.field === rpmField).length;
         await advance(400);
         assert.equal(reads.filter((read) => read.field === rpmField).length, readCount,
-            'six more polls do not start another pending RPM getter');
+            '38 more 10 ms polls do not start another pending RPM getter');
         rpmProvider.notify(rpmField, { actualValueRPMEngineCrankshaft: 16000 });
         assert.equal(car.data().rpm, 4000, 'newer notification is delivered immediately');
         rpmProvider.release(); await settle();
@@ -153,7 +155,7 @@ async function run() {
         await settle();
         assert.equal(samples.length, beforeStop, 'late getters and notices cannot revive a stopped vehicle feed');
         assert.equal(rpmProvider.shutdowns, 1); assert.equal(speedProvider.shutdowns, 1);
-        console.log('F8X RPM acquisition: RPM-only 50 ms reads, 500 ms speed heartbeat, one pending getter, newer-notice precedence, stationary zeros, unchanged dropout and teardown passed.');
+        console.log('F8X RPM acquisition: RPM-only 10 ms reads, 500 ms speed heartbeat, one pending getter across 38 polling attempts, newer-notice precedence, stationary zeros, unchanged dropout and teardown passed.');
     } finally { if (!car.stopped) car.stop(); }
 }
 run().catch((error) => { console.error(error.stack); process.exitCode = 1; });

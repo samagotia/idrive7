@@ -1,0 +1,26 @@
+{
+  "version": "0.16.5",
+  "scope": "Targeted Mac checks for RPM-only 10 ms polling; fallback tests run against the actual extracted package; car disconnected, no on-car performance measurements",
+  "checks": [
+    {
+      "test": "RPM acquisition",
+      "passed": true,
+      "output": "F8X RPM acquisition: RPM-only 10 ms reads, 500 ms speed heartbeat, one pending getter across 38 polling attempts, newer-notice precedence, stationary zeros, unchanged dropout and teardown passed."
+    },
+    {
+      "test": "Signal lifecycle",
+      "passed": true,
+      "output": "F8X signal lifecycle: pending reads, availability, late events and poll-timer teardown passed."
+    },
+    {
+      "test": "Packaged parked fallback",
+      "passed": true,
+      "output": "Passed: stock startup, no demo, valid stationary zeros, independent signal timeouts, invalid RPM, provider loss, renderer reconnect, and manual Off."
+    },
+    {
+      "test": "Packaged GPU-backend fallback",
+      "passed": true,
+      "output": "Passed: stock startup, no demo, valid stationary zeros, independent signal timeouts, invalid RPM, provider loss, renderer reconnect, and manual Off."
+    }
+  ]
+}
