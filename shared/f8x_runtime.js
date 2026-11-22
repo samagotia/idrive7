@@ -1181,9 +1181,17 @@ class F8xRuntime {
             }
             const now = Date.now(), motionNow = motionClockMs();
             this.f82NextFrameAt = motionNow > plan.nextAt ? motionNow + plan.interval : plan.nextAt;
-            this.f82Needles.forEach((x) => this._guard('widget ' + x.w.id, () => {
-                if (this._updateF82(x, now, false, motionNow)) this.f82SentAt = now;
-            }));
+            const connections = Array.from(new Set(this.f82Needles.map((x) => x.c)));
+            connections.forEach((client) => {
+                const draw = () => this.f82Needles.forEach((x) => {
+                    if (x.c !== client) return;
+                    this._guard('widget ' + x.w.id, () => {
+                        if (this._updateF82(x, now, false, motionNow)) this.f82SentAt = now;
+                    });
+                });
+                if (typeof client.batchPoses === 'function') client.batchPoses(draw);
+                else draw();
+            });
             if (Array.from(this.f82Motion.values()).some((motion) => motion.moving(motionNow))) this._queueF82();
         }, plan.delay);
     }
@@ -1202,12 +1210,17 @@ class F8xRuntime {
                 : f82Sprite.angle(curve, raw);
             const id = x.w.needleId || x.w.id;
             // All companion layers sample one motion at the same clock time.
-            if (!this.f82Motion) this.f82Motion = new Map();
-            if (!this.f82Motion.has(id)) this.f82Motion.set(id, new NeedleMotion(slow
-                ? { settleMs: 100, maxStepMs: 100 } : { settleMs: 36, maxStepMs: 36 }));
-            const motion = this.f82Motion.get(id);
-            const drawn = motion.sample(value, motionNow);
-            moving = motion.moving(motionNow);
+            let drawn = value;
+            if (slow) {
+                if (!this.f82Motion) this.f82Motion = new Map();
+                if (!this.f82Motion.has(id)) this.f82Motion.set(id, new NeedleMotion({ settleMs: 100, maxStepMs: 100 }));
+                const motion = this.f82Motion.get(id);
+                drawn = motion.sample(value, motionNow);
+                moving = motion.moving(motionNow);
+            }
+            // Speed/RPM use the latest measured value in this frame. Starting
+            // a 36ms ease here first sent the old angle and delayed even a
+            // fresh 100Hz source by another 1–3 display frames.
             if (drawn !== null) degrees = Math.round(drawn * 100) / 100;
         }
         if (!force && degrees === x.last) return false;

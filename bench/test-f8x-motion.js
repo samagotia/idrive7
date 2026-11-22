@@ -7,6 +7,7 @@ const vm = require('vm');
 const motion = require('../shared/f8x_motion');
 const sprite = require('../shared/f82_sprite');
 const { ClusterRender } = require('../shared/cluster_render_client');
+const wire = require('./renderer-wire');
 const root = path.resolve(__dirname, '..');
 
 const needle = new motion.NeedleMotion();
@@ -103,9 +104,9 @@ function exercise(fps, light) {
     advance(10000, true);
     advance(10200, false); // finish the final settlement
     const cpu = process.cpuUsage(cpuAt);
-    const count = writes.length, bytes = writes.reduce((sum, b) => sum + b.length, 0);
-    assert(writes.every((b) => b[4] === 0x4a), 'movement sends no pixel frames or geometry');
-    assert(writes.every((b) => JSON.parse(b.subarray(5)).op === 'set'), 'movement uses plain pose commands only');
+    const count = writes.length, commands = wire.frames(writes), bytes = writes.reduce((sum, b) => sum + b.length, 0);
+    assert(commands.every((b) => b[4] === 0x4a), 'movement sends no pixel frames or geometry');
+    assert(commands.every((b) => JSON.parse(b.subarray(5)).op === 'set'), 'movement uses plain pose commands only');
     assert.equal(timers.size, 0, 'settled needles stop their frame timer');
     runtime._queueF82(); advance(10300, false);
     assert.equal(writes.length, count, 'a stationary sample sends no commands');
@@ -122,7 +123,7 @@ function exercise(fps, light) {
     runtime.stop();
     assert.equal(timers.size, 0, 'stop cancels the frame timer');
     assert.equal(runtime.f82Motion.size, 0, 'stop clears all interpolation state');
-    return { fps, light, commandsPerSecond: +(count / 10.2).toFixed(1), KiBPerSecond: +(bytes / 1024 / 10.2).toFixed(2),
+    return { fps, light, commandsPerSecond: +(commands.length / 10.2).toFixed(1), socketWritesPerSecond: +(count / 10.2).toFixed(1), KiBPerSecond: +(bytes / 1024 / 10.2).toFixed(2),
         pixelWrites: 0, hostCpuMs: +((cpu.user + cpu.system) / 1000).toFixed(2) };
 }
 

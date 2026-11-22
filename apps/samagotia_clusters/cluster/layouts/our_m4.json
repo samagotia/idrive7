@@ -1,5 +1,5 @@
 {
-  "_about": "F8X layout enlarged for the G82 display: uniformly scaled main gauges (+14%) and auxiliary gauges (+10%), with wider auxiliary placement. Texture-space pivots, curves and artwork retain their original registration. The runtime can crop the backdrop above BMW's bottom strip for the native-box comparison.",
+  "_about": "F8X G82 layout: main dials reduced uniformly by 10% and auxiliary dials by 20% relative to 0.16.7. Main hubs move outward to increase their separation from 700 to 740 px. Original texture-space pivots, curves, shadows, glass and warning-track calibration stay registered. The runtime can crop the backdrop above BMW's bottom strip for the native-box comparison.",
   "name": "F8X",
   "schemaVersion": 2,
   "sourceDesign": "f82",
@@ -19,14 +19,14 @@
     },
     {
       "asset": "speed-face",
-      "h": 556.32,
+      "h": 500.688,
       "id": "speed_face",
       "nightAsset": "speed-face-night",
       "own": true,
       "type": "f82sprite",
-      "w": 655.5,
-      "x": 273.7,
-      "y": 20.38,
+      "w": 589.95,
+      "x": 287.33,
+      "y": 52.642,
       "z": 1
     },
     {
@@ -41,7 +41,7 @@
           120
         ]
       ],
-      "h": 322.62,
+      "h": 290.358,
       "id": "speed_needle",
       "nightAsset": "speed-needle-v2-night",
       "own": true,
@@ -56,14 +56,14 @@
       },
       "signal": "speed",
       "type": "f82sprite",
-      "w": 29.64,
-      "x": 595.18,
-      "y": 84.22,
+      "w": 26.676,
+      "x": 576.662,
+      "y": 110.098,
       "z": 2
     },
     {
       "asset": "rpm-face",
-      "h": 556.32,
+      "h": 500.688,
       "id": "rpm_face",
       "nightAsset": "rpm-face-night",
       "own": true,
@@ -76,9 +76,9 @@
         118
       ],
       "type": "f82sprite",
-      "w": 655.5,
-      "x": 973.7,
-      "y": 20.38,
+      "w": 589.95,
+      "x": 1027.33,
+      "y": 52.642,
       "z": 1
     },
     {
@@ -113,7 +113,7 @@
           106
         ]
       ],
-      "h": 322.62,
+      "h": 290.358,
       "id": "rpm_needle",
       "nightAsset": "rpm-needle-v2-night",
       "own": true,
@@ -128,21 +128,21 @@
       },
       "signal": "rpm",
       "type": "f82sprite",
-      "w": 29.64,
-      "x": 1295.18,
-      "y": 84.22,
+      "w": 26.676,
+      "x": 1316.662,
+      "y": 110.098,
       "z": 2
     },
     {
       "asset": "fuel-face",
-      "h": 276.1,
+      "h": 220.88,
       "id": "fuel_face",
       "nightAsset": "fuel-face-night",
       "own": true,
       "type": "f82sprite",
-      "w": 273.9,
-      "x": 19.2,
-      "y": 348.4,
+      "w": 219.12,
+      "x": 47.36,
+      "y": 382.72,
       "z": 1
     },
     {
@@ -162,7 +162,7 @@
         "nightAsset": "fuel-needle-v2-glass-night",
         "outward": -1
       },
-      "h": 155.1,
+      "h": 124.08,
       "id": "fuel_needle",
       "nightAsset": "fuel-needle-v2-night",
       "own": true,
@@ -178,21 +178,21 @@
       },
       "signal": "fuel",
       "type": "f82sprite",
-      "w": 26.4,
-      "x": 146.8,
-      "y": 407.8,
+      "w": 21.12,
+      "x": 149.44,
+      "y": 430.24,
       "z": 2
     },
     {
       "asset": "oil-face",
-      "h": 276.1,
+      "h": 220.88,
       "id": "oil_face",
       "nightAsset": "oil-face-night",
       "own": true,
       "type": "f82sprite",
-      "w": 273.9,
-      "x": 1619.2,
-      "y": 348.4,
+      "w": 219.12,
+      "x": 1647.36,
+      "y": 382.72,
       "z": 1
     },
     {
@@ -212,7 +212,7 @@
         "nightAsset": "oil-needle-v2-glass-night",
         "outward": 1
       },
-      "h": 155.1,
+      "h": 124.08,
       "id": "oil_needle",
       "nightAsset": "oil-needle-v2-night",
       "own": true,
@@ -228,9 +228,9 @@
       },
       "signal": "oil",
       "type": "f82sprite",
-      "w": 26.4,
-      "x": 1746.8,
-      "y": 407.8,
+      "w": 21.12,
+      "x": 1749.44,
+      "y": 430.24,
       "z": 2
     },
     {
@@ -242,13 +242,13 @@
         255
       ],
       "font": "f82_gear",
-      "h": 68,
+      "h": 61,
       "id": "gear_selector",
       "text": "{{stage}}",
       "type": "atext",
-      "w": 66,
-      "x": 1277,
-      "y": 512,
+      "w": 59,
+      "x": 1300,
+      "y": 495,
       "z": 3
     },
     {
@@ -260,13 +260,13 @@
         255
       ],
       "font": "f82_gear",
-      "h": 38,
+      "h": 34,
       "id": "gear_number",
       "text": "{{gearInD}}",
       "type": "atext",
-      "w": 36,
-      "x": 1238,
-      "y": 541,
+      "w": 32,
+      "x": 1265,
+      "y": 521,
       "z": 3
     }
   ]

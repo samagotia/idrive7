@@ -24,14 +24,17 @@ vm.runInNewContext(fs.readFileSync(path.join(root, 'shared/f8x_fuel_warning_art.
     require: (name) => name === './f8x_text' ? textModule.exports : require(path.join(root, 'shared', name)),
 });
 const fuelArt = moduleStub.exports;
-const old = { speed: { w: 575, h: 488 }, rpm: { w: 575, h: 488 },
-    fuel: { w: 249, h: 251 }, oil: { w: 249, h: 251 } };
+const old = { speed: { w: 655.5, h: 556.32 }, rpm: { w: 655.5, h: 556.32 },
+    fuel: { w: 273.9, h: 276.1 }, oil: { w: 273.9, h: 276.1 } };
 const faceOf = (signal) => layout.widgets.find((w) => w.id === signal + '_face');
 const needleOf = (signal) => layout.widgets.find((w) => w.signal === signal);
 for (const signal of Object.keys(old)) {
     const face = faceOf(signal), needle = needleOf(signal), f = read(face.asset), n = read(needle.asset);
     const scale = face.w / f.w;
-    assert(face.w / old[signal].w >= (signal === 'speed' || signal === 'rpm' ? 1.12 : 1.08), signal + ': actually larger than the installed 0.16.6 layout');
+    const requested = signal === 'speed' || signal === 'rpm' ? 0.9 : 0.8;
+    assert(Math.abs(face.w / old[signal].w - requested) < 1e-10
+        && Math.abs(face.h / old[signal].h - requested) < 1e-10,
+    signal + ': exact requested reduction relative to published 0.16.7');
     assert(Math.abs(scale - face.h / f.h) < 1e-10, signal + ': exact uniform face scale');
     assert(Math.abs(scale - needle.w / n.w) < 1e-10 && Math.abs(scale - needle.h / n.h) < 1e-10,
         signal + ': face and blade share the same scale');
@@ -44,8 +47,10 @@ for (const signal of Object.keys(old)) {
     assert(Math.abs(pivot.x - (face.x + centre[0] * scale)) < 1e-8);
     assert(Math.abs(pivot.y - (face.y + centre[1] * scale)) < 1e-8);
 }
-assert(faceOf('speed').x < 331 && faceOf('speed').x + faceOf('speed').w > 906, 'left main dial uses more width on both sides');
-assert(faceOf('rpm').x < 999 && faceOf('rpm').x + faceOf('rpm').w > 1574, 'right main dial uses more width on both sides');
+const speedPivot = pivotOf(layout, 'speed', read), rpmPivot = pivotOf(layout, 'rpm', read);
+assert.equal(rpmPivot.x - speedPivot.x, 740, 'main hub separation grows from 700 to 740 pixels');
+const gap = faceOf('rpm').x - (faceOf('speed').x + faceOf('speed').w);
+assert(Math.abs(gap - 150.05) < 1e-8 && gap > 44.5, 'visible inner space grows after reducing and spreading the main dials');
 assert(faceOf('fuel').x < 124 && faceOf('oil').x + faceOf('oil').w > 1789, 'auxiliary gauges fill the outer display');
 assert(Math.abs(pivotOf(layout, 'speed', read).x + pivotOf(layout, 'rpm', read).x - 1920) < 1e-8, 'main dials balance around display centre');
 
@@ -85,10 +90,10 @@ const needles = layout.widgets.filter((w) => w.signal);
 const companions = needles.filter((w) => w.shadow).map(sprite.shadowOf).concat(needles.filter((w) => w.glass).map(sprite.glassOf));
 const rpmFace = faceOf('rpm'), rpmNeedle = needleOf('rpm');
 const arc = sprite.lowerArcOf(layout, read);
-assert(arc && arc.y + arc.h <= 646, 'the enlarged lower arc remains in the custom region');
+assert(arc && arc.y + arc.h <= 646, 'the resized lower arc remains in the custom region');
 const doors = doorArt.widgetsFor(layout, read, 646), fuel = fuelArt.widgetsFor(layout, read, 646);
-assert.equal(doors.length, 1, 'enlargement must not accidentally discard the live door diagram');
-assert.equal(fuel.length, 2, 'both fuel warning elements survive the larger geometry');
+assert.equal(doors.length, 1, 'resizing must not accidentally discard the live door diagram');
+assert.equal(fuel.length, 2, 'both fuel warning elements survive the resized geometry');
 for (const w of doors.concat(fuel)) {
     for (let y = w.y; y < w.y + w.h; y++) for (let x = w.x; x < w.x + w.w; x++) {
         const dx = x + 0.5 - (arc.x + arc.arcCenter[0]), dy = y + 0.5 - (arc.y + arc.arcCenter[1]);
@@ -105,9 +110,9 @@ for (const digital of [false, true]) {
     const prepared = strip.prepare(full, read);
     assert(prepared.every((w) => w.y + w.h <= 646), 'all hidden/static/generated layers clear the strip');
     for (const original of layout.widgets.filter((w) => w.id !== 'backdrop').concat(companions)) {
-        assert.equal(prepared.find((w) => w.id === original.id), original, 'strip toggle retains enlarged dial geometry');
+        assert.equal(prepared.find((w) => w.id === original.id), original, 'strip toggle retains resized dial geometry');
     }
     assert(prepared.some((w) => w.doorRole), 'door diagram survives strip composition');
     assert(prepared.some((w) => w.warningRole === 'fuelReserveText'), 'fuel message survives strip composition');
 }
-console.log('F8X sizing: larger shipped faces and outer span, exact uniform face/blade scale and optical pivots, zero Day/Night silhouette collisions, generated readouts/warnings and native-strip clearance passed.');
+console.log('F8X sizing: exact 10% main / 20% auxiliary reductions from 0.16.7 and wider main gap, exact uniform face/blade scale and optical pivots, zero Day/Night silhouette collisions, generated readouts/warnings and native-strip clearance passed.');

@@ -1,6 +1,7 @@
 'use strict';
-// Historical test filename: the instrument GPU now takes resident pose updates.
-// This measures deterministic interpolation only, not car frame rate.
+// Historical test filename: unit contract for the generic bounded settler.
+// RPM/speed now bypass this settler; fuel/oil use a100ms instance. This is not
+// evidence of the live RPM path or of the car's frame rate.
 const assert = require('assert').strict;
 const { NeedleMotion } = require('../shared/f8x_motion');
 const near = (a, b) => assert(Math.abs(a - b) < 1e-9, a + ' differs from ' + b);
@@ -26,4 +27,4 @@ for (const delta of [-240, -50, -1, 1, 50, 240]) {
     near(motion.sample(42, 201), 42);
     motion.sample(50, 210); near(motion.sample(10, 100), 10);
 }
-console.log('F8X short needle motion: 36ms fast settlement across large steps, bounded reversals, no prediction, invalid clearing and monotonic-clock recovery passed.');
+console.log('F8X generic settler: bounded36ms test instance, reversals, no prediction, invalid clearing and monotonic-clock recovery passed; live RPM/speed bypass this interpolator.');

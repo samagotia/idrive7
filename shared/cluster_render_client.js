@@ -120,6 +120,8 @@ class ClusterRender extends EventEmitter {
         this.nextRef = 1;
         this.pendingFrames = new Map();   /* ref -> frame message waiting for the socket */
         this.pendingSets = new Map();     /* ref -> latest merged pose while backpressured */
+        this.poseBatchDepth = 0;
+        this.poseBatch = new Map();       /* bounded by resident layers, never frame history */
         this.blocked = false;
         this.inbuf = Buffer.alloc(0);
         this.backend = '';
@@ -141,6 +143,7 @@ class ClusterRender extends EventEmitter {
         this.connected = false;
         this.blocked = false;
         this.pendingSets.clear();
+        this.poseBatch.clear();
         this.pendingFrames.clear();
     }
 
@@ -380,13 +383,37 @@ class ClusterRender extends EventEmitter {
         const m = { op: 'set', ref: ref };
         this._setFields(m, opts);
         if (l.kind === 'mesh') MESH_KEYS.forEach((k) => { if (opts[k] !== undefined) m[k] = opts[k]; });
-        if (this.blocked) {
-            const pending = this.pendingSets.get(ref) || { op: 'set', ref: ref };
+        if (this.blocked || this.poseBatchDepth) {
+            const queue = this.blocked ? this.pendingSets : this.poseBatch;
+            const pending = queue.get(ref) || { op: 'set', ref: ref };
             Object.assign(pending, m);
-            this.pendingSets.set(ref, pending);
+            queue.set(ref, pending);
             return;
         }
         this._send(m);
+    }
+
+    /* All companion poses for a display frame go in one stream write. The
+     * service already parses consecutive protocol frames before rendering;
+     * batching avoids separate wakeups/partial scene flushes per needle. */
+    batchPoses(draw) {
+        this.poseBatchDepth++;
+        try { return draw(); }
+        finally {
+            this.poseBatchDepth--;
+            if (!this.poseBatchDepth && this.poseBatch.size) {
+                const poses = [];
+                this.poseBatch.forEach((pose, ref) => {
+                    if (!this.layers.has(ref)) return;
+                    if (this.blocked) {
+                        const latest = this.pendingSets.get(ref) || { op: 'set', ref: ref };
+                        Object.assign(latest, pose); this.pendingSets.set(ref, latest);
+                    } else poses.push(jsonMessage(pose));
+                });
+                this.poseBatch.clear();
+                if (poses.length) this._write(Buffer.concat(poses));
+            }
+        }
     }
 
     /* values: 1-4 numbers; or, with opts.type ('float', 'vec2', 'vec3',
@@ -500,6 +527,7 @@ class ClusterRender extends EventEmitter {
         if (!sampled) this.layers.delete(ref);
         this.pendingFrames.delete(ref);
         this.pendingSets.delete(ref);
+        this.poseBatch.delete(ref);
         this._send({ op: 'drop', ref: ref });
     }
 

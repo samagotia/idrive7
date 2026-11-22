@@ -7,6 +7,7 @@ const vm = require('vm');
 const motion = require('../shared/f8x_motion');
 const sprite = require('../shared/f82_sprite');
 const { ClusterRender } = require('../shared/cluster_render_client');
+const wire = require('./renderer-wire');
 const root = path.resolve(__dirname, '..');
 const layout = require('../apps/samagotia_clusters/cluster/layouts/our_m4.json');
 const fronts = layout.widgets.filter((w) => w.signal && w.shadow);
@@ -52,7 +53,7 @@ function fixture(backend, environment, light) {
         runtime._updateF82(x, now, true, now);
     }
     runtime.widgets = new Map(runtime.f82Needles.map((x) => [x.w.id, x]));
-    const messages = () => frames.map((b) => {
+    const messages = () => wire.frames(frames).map((b) => {
         assert.equal(b[4], 0x4a, 'needle updates never upload pixels or geometry');
         assert.equal(b.readUInt32LE(0), b.length - 4);
         return JSON.parse(b.subarray(5));
@@ -111,13 +112,13 @@ for (const [backend, environment] of [['ramses-test', {}], ['bench', {}],
     f.advance(117); f.companions();
     const rpm = f.runtime.f82Needles.find((x) => x.w.id === 'rpm_needle');
     const before = f.client.layers.get(rpm.ref).opts.rotate;
-    assert(before > expected(rpm, initial) && before < expected(rpm, changed), 'first frame moves toward the measured target');
+    near(before, expected(rpm, changed), 'first frame uses the actual RPM without an extra eased glide');
     f.feed(120, reversed); f.advance(134); f.companions();
     const turning = f.client.layers.get(rpm.ref).opts.rotate;
-    assert(turning >= before && turning <= expected(rpm, changed), 'retarget starts at the current angle without jumping');
+    near(turning, expected(rpm, reversed), 'the next frame follows the newest reversal');
     f.advance(151); f.companions();
     const after = f.client.layers.get(rpm.ref).opts.rotate;
-    assert(after < turning && after >= expected(rpm, reversed), 'reversal follows the newest reading without overshoot');
+    near(after, expected(rpm, reversed), 'a reversal stays on the actual latest reading');
     f.advance(400); f.companions();
     for (const x of f.runtime.f82Needles) {
         const layer = f.client.layers.get(x.ref);
@@ -177,4 +178,4 @@ for (const blockBeforeCallback of [false, true]) {
     client.sock = {}; socket.emit('drain');
     assert.equal(drains, 1, 'late drain from an obsolete socket is ignored');
 }
-console.log('F8X GPU motion: resident poses, coherent companions, short continuous reversals, idle silence, invalid recovery, zero animation rebuilds/pixel uploads and real drain/backpressure recovery passed.');
+console.log('F8X GPU motion: newest measured poses, coherent batches/companions, bounded reversals, idle silence, invalid recovery, zero animation rebuilds/pixel uploads and real drain/backpressure recovery passed.');

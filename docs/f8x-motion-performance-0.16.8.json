@@ -1,0 +1,174 @@
+{
+  "scope": "Deterministic actual-runtime command simulation with ideal renderer; not a car FPS/latency measurement.",
+  "baselineCommit": "28b810fdb2bd3fd077e35abcf0716f9669dac116",
+  "currentSources": {
+    "shared/f8x_runtime.js": "f5cdc040d14500589511d4a7d0e3ffdaf31529ba40949f9789492833f46a3135",
+    "shared/f8x_motion.js": "e37b628b140414f6f2b8a0160f40a792e13f1399c58db65a399a727f3e325323",
+    "shared/f8x_vehicle.js": "bb8093922dd16a541acd49aecbe0ce7e73b8b48798238bb4c750ad4a1ac45ae5",
+    "shared/f82_sprite.js": "4bd27d0102f85785350654bf704ae966dfc5c16f6ec09275cd649408a6ee9326",
+    "shared/cluster_render_client.js": "18cca8aeed21ad4fd0dba4caa6c07b612f225d2c6e899a80e752b696b500496d"
+  },
+  "assumptions": [
+    "Ramp rises at 2000 RPM/s; observations use milliseconds 500–2500.",
+    "All commands/animations are rendered ideally at arrival; real transport and flush delays are excluded.",
+    "Source cadence is supplied, not measured. 500ms models getter-only baseline; notifications could already be faster.",
+    "The 25ms source case assumes a genuinely new source value each read. The cached case repeats values between 50ms source updates.",
+    "A 50ms runtime housekeeping tick remains active; only the Day RPM needle and shadow change in this trace.",
+    "Pose command batches per second are software output cadence, not physical display FPS."
+  ],
+  "baseline20HzSource": {
+    "readPeriodMs": 50,
+    "sourcePeriodMs": 50,
+    "meanTrackingLagMs": 57.61,
+    "p95TrackingLagMs": 77,
+    "maxTrackingLagMs": 83,
+    "commandsPerSecond": 116,
+    "KiBPerSecond": 8.1,
+    "socketWritesPerSecond": 116,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 58,
+      "minIntervalMs": 16,
+      "medianIntervalMs": 17,
+      "p95IntervalMs": 17
+    }
+  },
+  "baselineGetterOnly2HzSource": {
+    "readPeriodMs": 500,
+    "sourcePeriodMs": 500,
+    "meanTrackingLagMs": 275.97,
+    "p95TrackingLagMs": 492,
+    "maxTrackingLagMs": 516,
+    "commandsPerSecond": 10,
+    "KiBPerSecond": 0.69,
+    "socketWritesPerSecond": 10,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 5,
+      "minIntervalMs": 16,
+      "medianIntervalMs": 17,
+      "p95IntervalMs": 467
+    }
+  },
+  "candidate20HzSource": {
+    "readPeriodMs": 50,
+    "sourcePeriodMs": 50,
+    "meanTrackingLagMs": 24.49,
+    "p95TrackingLagMs": 47,
+    "maxTrackingLagMs": 49,
+    "commandsPerSecond": 40,
+    "KiBPerSecond": 2.78,
+    "socketWritesPerSecond": 20,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 20,
+      "minIntervalMs": 50,
+      "medianIntervalMs": 50,
+      "p95IntervalMs": 50
+    }
+  },
+  "hypotheticalCandidate40HzSource": {
+    "readPeriodMs": 25,
+    "sourcePeriodMs": 25,
+    "meanTrackingLagMs": 11.96,
+    "p95TrackingLagMs": 23,
+    "maxTrackingLagMs": 24.09,
+    "commandsPerSecond": 80,
+    "KiBPerSecond": 5.58,
+    "socketWritesPerSecond": 40,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 40,
+      "minIntervalMs": 25,
+      "medianIntervalMs": 25,
+      "p95IntervalMs": 25
+    }
+  },
+  "candidate40HzReadsWith20HzCachedSource": {
+    "readPeriodMs": 25,
+    "sourcePeriodMs": 50,
+    "meanTrackingLagMs": 24.49,
+    "p95TrackingLagMs": 47,
+    "maxTrackingLagMs": 49,
+    "commandsPerSecond": 40,
+    "KiBPerSecond": 2.78,
+    "socketWritesPerSecond": 20,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 20,
+      "minIntervalMs": 50,
+      "medianIntervalMs": 50,
+      "p95IntervalMs": 50
+    }
+  },
+  "candidate100HzSource": {
+    "readPeriodMs": 10,
+    "sourcePeriodMs": 10,
+    "meanTrackingLagMs": 13.02,
+    "p95TrackingLagMs": 22,
+    "maxTrackingLagMs": 26,
+    "commandsPerSecond": 120,
+    "KiBPerSecond": 8.41,
+    "socketWritesPerSecond": 60,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 60,
+      "minIntervalMs": 16,
+      "medianIntervalMs": 17,
+      "p95IntervalMs": 17
+    }
+  },
+  "candidate100HzReadsWith20HzCachedSource": {
+    "readPeriodMs": 10,
+    "sourcePeriodMs": 50,
+    "meanTrackingLagMs": 31.51,
+    "p95TrackingLagMs": 60,
+    "maxTrackingLagMs": 66,
+    "commandsPerSecond": 39.33,
+    "KiBPerSecond": 2.73,
+    "socketWritesPerSecond": 19.67,
+    "animateCommands": 0,
+    "stopCommands": 0,
+    "poseCommandCadence": {
+      "batchesPerSecond": 19.67,
+      "minIntervalMs": 34,
+      "medianIntervalMs": 50,
+      "p95IntervalMs": 50
+    }
+  },
+  "meanLagReductionWithSameSourcePercent": 57.49,
+  "baselineFunctional": {
+    "reversalBounded": true,
+    "withheldSampleHoldsLastValue": true,
+    "settledSilence": true,
+    "invalidHidden": true,
+    "recoveryUsesFreshValue": true,
+    "noBitmapOrMeshWrites": true
+  },
+  "candidateFunctional": {
+    "reversalBounded": true,
+    "withheldSampleHoldsLastValue": true,
+    "settledSilence": true,
+    "invalidHidden": true,
+    "recoveryUsesFreshValue": true,
+    "noBitmapOrMeshWrites": true
+  },
+  "candidateBackpressure": {
+    "blockedDurationMs": 410,
+    "socketMessagesWhileBlocked": 0,
+    "recoveredLatestValue": true
+  },
+  "candidateEventLoopStall": {
+    "durationMs": 490,
+    "commandsOnResume": 2,
+    "missedFrameBacklog": false,
+    "timerCountBound": 1,
+    "recoveredLatestValue": true
+  }
+}

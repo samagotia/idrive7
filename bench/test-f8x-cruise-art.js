@@ -45,7 +45,7 @@ saved.widgets.filter((w) => ['speed_face', 'speed_needle'].includes(w.id)).forEa
 });
 const scaledMarker = checkGeometry(saved, 170)[0];
 assert(Math.abs(scaledMarker.cruiseGeometry.rx - widgets[0].cruiseGeometry.rx * .8) < 1e-9,
-    'a saved scale is relative to the already enlarged source face');
+    'a saved scale is relative to the current source face');
 assert.deepEqual(art.widgetsFor({ widgets: [] }, readAsset), []);
 for (const w of widgets) {
     const green = art.pixelsFor(w, 'active'), amber = art.pixelsFor(w, 'standby');

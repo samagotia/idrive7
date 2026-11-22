@@ -41,18 +41,18 @@ function gearReadout(data, mDriveProgram, showGearInD) {
 function gearWidget(widget) {
     if (widget.id === 'gear_selector' && widget.text === '{{stage}}') {
         return Object.assign({}, widget, {
-            type: 'text', align: 'center',
+            type: 'text', align: 'center', rate: 50,
             x: widget.x - Math.floor(widget.w / 2), w: widget.w * 2,
         });
     }
     if (widget.id === 'gear_number' && widget.text === '{{gearInD}}') {
-        return Object.assign({}, widget, { align: 'right', cells: 2, x: widget.x - widget.w, w: widget.w * 2 });
+        return Object.assign({}, widget, { align: 'right', cells: 2, rate: 50, x: widget.x - widget.w, w: widget.w * 2 });
     }
     return widget;
 }
 
 const digitalSpeedWidgets = [
-    { id: 'f82_speed_value', type: 'atext', font: 'f82_speed', align: 'right', cells: 3,
+    { id: 'f82_speed_value', type: 'atext', font: 'f82_speed', align: 'right', cells: 3, rate: 50,
         x: 885, y: 511, w: 102, h: 47, z: 3, text: '{{f82Speed}}',
         color: [151, 157, 131, 255], nightColor: [229, 231, 219, 255] },
     { id: 'f82_speed_unit', type: 'text', font: 'r_label',

@@ -37,7 +37,7 @@ for (const digital of [false, true]) for (const native of [false, true]) {
         const image = read(face.asset), scale = Math.min(face.w / image.w, face.h / image.h);
         near(speed.w / sprites.digitalSpeedWidgets[0].w, scale);
         near(speed.h / sprites.digitalSpeedWidgets[0].h, scale);
-        assert(speed.h > sprites.digitalSpeedWidgets[0].h, 'main speed readout grows with the enlarged faces');
+        near(speed.h, 47 * 1.026); // 0.16.7's 1.14 scale, reduced by 10%.
     }
 }
 const shifted = JSON.parse(JSON.stringify(layout));
@@ -54,4 +54,4 @@ assert.deepEqual(sprites.readoutWidgetsFor(mph, true, read, true), sprites.reado
     'distance-unit artwork selection does not fall back to old readout geometry');
 assert.equal(JSON.stringify([layout, sprites.digitalSpeedWidgets, sprites.infoWidgets, sprites.infoClock, sprites.infoAmbient]), frozen,
     'per-layout anchors never mutate source widgets or legacy constants');
-console.log('F8X readout fit: larger proportional speed glyphs, source-alpha dial clearance, non-overlapping information rows, native-strip/full-height modes, translated anchors and MPH parity passed.');
+console.log('F8X readout fit: proportional resized speed glyphs, source-alpha dial clearance, non-overlapping information rows, native-strip/full-height modes, translated anchors and MPH parity passed.');

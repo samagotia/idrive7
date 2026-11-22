@@ -2,7 +2,7 @@
 
 Standalone BMW iDrive 7 instrument-cluster app featuring **F8X**. App ID: `samagotia_clusters`.
 
-![F8X — local preview with simulated signals](docs/preview-enlarged-day.png)
+![F8X — local preview with simulated signals](docs/preview-0.16.8-day.png)
 
 ## MGU Store installation
 
@@ -14,9 +14,11 @@ Add this GitHub repository as a source in MGU Store. The binary catalog is:
 
 The app starts with the **BMW cluster** selected and demo data off on the car. Select F8X only while parked for initial checks. Missing/stale speed or RPM, or renderer disconnection, returns to BMW and requires manual reselection. Live readers are source mapped; G82 reception, cold-limit tracking and native BMW warning takeover remain unverified on the car.
 
-## Parked-test update 0.16.7
+## Parked-test update 0.16.8
 
-Main dials are 14% larger and fuel/oil gauges 10% larger, with wider spacing and matching needle geometry. **Designs → Keep BMW bottom strip clear (test)** defaults to On; this preserves the native lower band as an experimental workaround for two black rectangles reported on M clusters. Switching it Off keeps the same enlarged dials and restores full-height coverage for comparison. The workaround and physical trim clearance still require a parked G82 check. [Comparison instructions](docs/native-m-boxes-parked-test.md).
+RPM and speed no longer wait for the extra 36 ms needle easing. Companion poses share one bounded socket write per frame, unchanged critical readings no longer wake the renderer, and speed backup reads run every 50 ms instead of 500 ms (RPM remains 10 ms). Live digital speed and gear can refresh every 50 ms rather than 200 ms. These changes reduce app delay; actual car latency and FPS remain unmeasured. [Response changes](docs/f8x-latency-0.16.8.md).
+
+Relative to 0.16.7, main dials are 10% smaller and outer gauges 20% smaller, in both Day and Night. Main hub spacing increases from 700 to 740 pixels. **Designs → Keep BMW bottom strip clear (test)** remains On by default, with the same dial geometry when toggled Off. Physical trim clearance and the black-box workaround still require a parked check. [Comparison instructions](docs/native-m-boxes-parked-test.md).
 
 ## Mac preview
 
@@ -38,4 +40,4 @@ for test in bench/test*.js; do node "$test" || exit 1; done
 
 The builder creates a local staging placeholder and removes it before packaging. No BMW SDK, private keys, coding backups or personal preview settings are distributed. The Store supplies the real SDK on the head unit.
 
-Original licences and credits are preserved in [NOTICE](NOTICE) and [LICENSE](LICENSE), including MPL-covered renderer-client source in `shared/cluster_render_client.js`. Full features and limitations: [app documentation](apps/samagotia_clusters/README.md). [Local validation](docs/validation-0.16.7.json).
+Original licences and credits are preserved in [NOTICE](NOTICE) and [LICENSE](LICENSE), including MPL-covered renderer-client source in `shared/cluster_render_client.js`. Full features and limitations: [app documentation](apps/samagotia_clusters/README.md). [Local validation](docs/validation-0.16.8.json).

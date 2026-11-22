@@ -95,9 +95,13 @@ class Car {
         const put = (key, value, tick) => {
             if (this.stopped || value === null || value === undefined
                 || (typeof value === 'number' && !Number.isFinite(value))) return;
+            const changed = this.live[key] !== value;
             this.live[key] = value;
             this.lastCar = Date.now();
-            if (tick && !this.demoActive) this._emit(this.live, this.lastCar);
+            // A successful getter still refreshes criticalAt above and lastCar
+            // here. Repeated cached values need not copy the whole sample and
+            // wake the renderer 100 times/s; motion owns its frame scheduling.
+            if (tick && changed && !this.demoActive) this._emit(this.live, this.lastCar);
         };
         const watches = {};
         const add = (iface, field, callback) => {
@@ -151,10 +155,10 @@ class Car {
         }));
         Object.keys(watches).forEach((iface) => {
             const essential = parkedTest && CRITICAL.find((key) => SIGNALS[key][0] === iface);
-            // RPM needs responsive reads when the provider's notifications are
-            // sparse. Poll only that field; speed retains its parked heartbeat.
+            // Critical needles need bounded backup reads when notifications are
+            // sparse: 10 ms for RPM and 50 ms for speed, only those two fields.
             // signals.watch permits one pending getter and lets newer notices win.
-            const options = essential ? { pollMs: essential === 'rpm' ? 10 : 500,
+            const options = essential ? { pollMs: essential === 'rpm' ? 10 : 50,
                 pollFields: [SIGNALS[essential][1]], readTimeoutMs: 500 }
                 : pollMs[iface] ? { pollMs: pollMs[iface] } : undefined;
             ctx.signals.watch(iface, '1', watches[iface], this.log, options).then((sub) => {

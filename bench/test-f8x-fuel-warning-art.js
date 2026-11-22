@@ -21,11 +21,11 @@ assert.equal(widgets.length, 2);
 assert.deepEqual(Array.from(widgets, (w) => w.warningRole), ['fuelReserveText', 'fuelReserveIcon']);
 const [text, pump] = widgets;
 assert.equal(text.text, 'Fuel reserve'); assert.equal(text.font, 'f82_info'); assert.equal(text.align, 'left');
-assert.deepEqual([text.x, text.y, text.w, text.h], [1132, 667, 190, 30]);
+assert.deepEqual([text.x, text.y, text.w, text.h], [1170, 634, 190, 30]);
 assert(pump.x > 1500 && pump.x + pump.w < 1700, 'pump stays in the information column');
-assert(text.y > 645 && text.y + text.h <= 720, 'full-height message sits below the enlarged lower arc');
+assert(text.y > 615 && text.y + text.h <= 720, 'full-height message sits below the resized lower arc');
 const stripWidgets = widgetsFor(layout, read, 646);
-assert.deepEqual(Array.from(stripWidgets, (w) => [w.x, w.y, w.w, w.h]), [[1499, 616, 190, 30], [1457, 610, 32, 36]],
+assert.deepEqual(Array.from(stripWidgets, (w) => [w.x, w.y, w.w, w.h]), [[1507, 616, 190, 30], [1465, 610, 32, 36]],
     'strip mode fits the message and compact pump beyond the lower arc');
 assert(stripWidgets.every((w) => w.y + w.h <= 646));
 assert.equal(pixelsFor(stripWidgets[1], 'day').length, 32 * 36 * 4);

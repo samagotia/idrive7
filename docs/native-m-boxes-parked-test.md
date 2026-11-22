@@ -1,4 +1,4 @@
-# Native M-cluster rectangles: parked comparison build 0.16.7
+# Native M-cluster rectangles: parked comparison build 0.16.8
 
 This is an experimental workaround, not a verified G82 fix. It does not change the vehicle, cluster coding, renderer installation, scene ID or target. No car action is performed by building or previewing it.
 
@@ -6,9 +6,9 @@ This is an experimental workaround, not a verified G82 fix. It does not change t
 
 **Designs → Keep BMW bottom strip clear (test)** defaults to **On**. All drawable layers end at or above y646 on the existing 1920 × 720 target. The opaque underlay ends at y646. The Day/Night background is cropped to its first 258 source rows and displayed at its original scale, ending at y645. It is not compressed vertically.
 
-The bundled F8X layout now has main dials 14% larger and auxiliary dials 10% larger than 0.16.6, with wider placement. Faces, blades, pivots, shadows, glass and rev-limit track use matching uniform scales. Switching this test setting retains exactly the same enlarged dial geometry in both modes. The app's footer and fixed clock/ambient copies are omitted; BMW's bottom strip can show its range, clock, gear and outside temperature. The central selected information page stays available. Fuel/door message artwork is fitted above the strip and outside the enlarged lower arc; the door diagram retains its full proportions and size in the bundled layout. A saved layout that crosses the boundary is refused rather than silently shrinking or moving its gauges.
+The bundled F8X layout now has main dials 10% smaller and auxiliary dials 20% smaller than 0.16.7; the main hubs are 740 pixels apart instead of 700. Faces, blades, pivots, shadows, glass and rev-limit track use matching uniform scales. Switching this test setting retains exactly the same resized dial geometry in both modes. The app's footer and fixed clock/ambient copies are omitted; BMW's bottom strip can show its range, clock, gear and outside temperature. The central selected information page stays available. Fuel/door message artwork is fitted above the strip and outside the lower arc; the door diagram retains its full proportions and size in the bundled layout. A saved layout that crosses the boundary is refused rather than silently shrinking or moving its gauges.
 
-**Off** restores the full-height background and original lower information composition for comparison, with the same enlarged dial geometry. The existing no-demo and stale-speed/RPM fallback remain active in both modes. BMW remains the startup selection.
+**Off** restores the full-height background and original lower information composition for comparison, with the same resized dial geometry. The existing no-demo and stale-speed/RPM fallback remain active in both modes. BMW remains the startup selection.
 
 ## What the evidence establishes
 
@@ -25,4 +25,4 @@ The scene geometry reaches the cluster-side graphics renderer, but no inspected 
 
 Local tests check actual renderer commands, cropped pixels in Day/Night, backpressure, hidden-layer bounds, all needle sweeps, exact dial geometry, mode switching and complete parked-test fallback. They cannot emulate BMW's proprietary masks or prove that this workaround removes them.
 
-The release package is `samagotia_clusters@0.16.7.tgz` in the GitHub catalog release. MGU Store obtains its URL and checksum from the catalog. Publication does not install anything in the car or establish that the workaround succeeds there.
+The release package is `samagotia_clusters@0.16.8.tgz` in the GitHub catalog release. MGU Store obtains its URL and checksum from the catalog. Publication does not install anything in the car or establish that the workaround succeeds there.

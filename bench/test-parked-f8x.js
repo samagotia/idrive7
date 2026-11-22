@@ -9,6 +9,7 @@ const net = require('net');
 const os = require('os');
 const path = require('path');
 const vm = require('vm');
+const { frames: wireFrames } = require('./renderer-wire');
 const { headUnit } = require('../kit/tools/hu-stub');
 
 const stage = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(__dirname, '../dist/samagotia_clusters');
@@ -77,20 +78,22 @@ class RenderSocket extends EventEmitter {
         setImmediate(() => this.emit('connect'));
     }
     write(bytes) {
-        if (bytes[4] !== 0x4a) return true;
-        const op = JSON.parse(bytes.slice(5).toString('utf8'));
-        if (op.op === 'hello') {
-            const hello = Buffer.from(JSON.stringify({ ev: 'hello', backend: process.env.F8X_TEST_BACKEND || 'bench' }));
-            const frame = Buffer.alloc(5 + hello.length);
-            frame.writeUInt32LE(hello.length + 1, 0);
-            frame[4] = 0x4a;
-            hello.copy(frame, 5);
-            setImmediate(() => this.emit('data', frame));
-        } else if (op.op === 'layer') {
-            assert.equal(op.target, 'panel');
-            this.layers.add(op.ref);
-            this.created++;
-        } else if (op.op === 'drop') this.layers.delete(op.ref);
+        wireFrames([bytes]).forEach((frameBytes) => {
+            if (frameBytes[4] !== 0x4a) return;
+            const op = JSON.parse(frameBytes.slice(5).toString('utf8'));
+            if (op.op === 'hello') {
+                const hello = Buffer.from(JSON.stringify({ ev: 'hello', backend: process.env.F8X_TEST_BACKEND || 'bench' }));
+                const frame = Buffer.alloc(5 + hello.length);
+                frame.writeUInt32LE(hello.length + 1, 0);
+                frame[4] = 0x4a;
+                hello.copy(frame, 5);
+                setImmediate(() => this.emit('data', frame));
+            } else if (op.op === 'layer') {
+                assert.equal(op.target, 'panel');
+                this.layers.add(op.ref);
+                this.created++;
+            } else if (op.op === 'drop') this.layers.delete(op.ref);
+        });
         return true;
     }
     destroy() {
@@ -241,7 +244,7 @@ async function run() {
             rpm.set(4000);
             await until(() => hud.client.layers.get(needle.ref).opts.rotate !== before,
                 'native GPU RPM pose responds before dropout tests');
-            assert(hud.f82Motion.size > 0, 'short resident-pose motion is exercised');
+            assert(!hud.f82Motion.has('rpm_needle'), 'RPM is not delayed by auxiliary-gauge smoothing');
             assert(Array.from(hud.client.layers.values()).every((layer) => layer.anims.size === 0),
                 'needle movement avoids native animation-system replacements');
         }
