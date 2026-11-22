@@ -1,0 +1,138 @@
+{
+  "version": "0.16.1",
+  "scope": "Mac tests; manifest separately checked against connected G82 catalog; app not installed",
+  "tests": [
+    {
+      "test": "test-f8x-aux-shadows.js",
+      "passed": true,
+      "output": "F8X needle shadows: fixed-light side changes, dedicated Day pixels, Night preservation, tight mirrored offsets, transitions, invalid data and unchanged glass passed."
+    },
+    {
+      "test": "test-f8x-backlight.js",
+      "passed": true,
+      "output": "F8X backlight: defaults, all 14 Day/Night/unit/engine variants, exact Original restoration, preserved hubs/coverage and isolated dial printing passed."
+    },
+    {
+      "test": "test-f8x-brake-art.js",
+      "passed": true,
+      "output": "F8X brake artwork: actual glyph/rim clearance, shared EU/US column, saved/scaled layouts, narrow-gap rejection and one-time raster passed. Centre=935"
+    },
+    {
+      "test": "test-f8x-car-formats.js",
+      "passed": true,
+      "output": "Passed: car-unit numeric/named enums, invalid defaults, date order, clock status, full-year/leap-date validation, timezone-safe dates, read-only polling, independent freshness, reconnect, rollback and late teardown."
+    },
+    {
+      "test": "test-f8x-client-backpressure.js",
+      "passed": true,
+      "output": "F8X client backpressure: latest merged poses, bounded queue, drain, frame ordering, drop, close and reconnect replay passed."
+    },
+    {
+      "test": "test-f8x-cruise-art.js",
+      "passed": true,
+      "output": "F8X cruise artwork: metric/MPH curve, saved geometry, hidden invalid states, cached colours, pose-only movement and teardown passed."
+    },
+    {
+      "test": "test-f8x-cruise.js",
+      "passed": true,
+      "output": "Passed: cruise DCC/ACC state and unit decode, LIM/HDC/override exclusion, MPH conversion, unknown-unit and invalid-speed marker hiding, getter polling, freshness, provider recovery and late teardown."
+    },
+    {
+      "test": "test-f8x-door-art.js",
+      "passed": true,
+      "output": "F8X door art: one bounded cached image, saved-layout placement/clearance, two/four-door and physical sides, bonnet/boot highlights, unknown-state suppression, Day/Night antialiasing and complete measured warning glyphs passed."
+    },
+    {
+      "test": "test-f8x-door-warning-runtime.js",
+      "passed": true,
+      "output": "F8X door warning runtime: shared warning ownership, real contact/model/steering decode, priority, no phantom coupe doors, cached Day/Night images, zero idle uploads, independent fuel restoration, unknown/reconnect and unchanged native ownership passed."
+    },
+    {
+      "test": "test-f8x-doors.js",
+      "passed": true,
+      "output": "F8X doors: exact contact enums, metadata/model policy, LHD/RHD, unknowns, notification-only subscriptions, whole-stream precedence, no fabricated heartbeat TTL, provider recovery and late teardown passed."
+    },
+    {
+      "test": "test-f8x-fuel-warning-art.js",
+      "passed": true,
+      "output": "F8X fuel warning artwork: factory placement, aligned warning column, filled pump, opaque triangle ink, complete font, cached lighting and unrelated icons passed."
+    },
+    {
+      "test": "test-f8x-fuel-warning-runtime.js",
+      "passed": true,
+      "output": "F8X fuel warning runtime: existing live stream, priority, inclusive 50 km fallback, zero range, provider loss/reconnect, monotonic expiry and pose-only cached visibility passed."
+    },
+    {
+      "test": "test-f8x-fuel-warning.js",
+      "passed": true,
+      "output": "F8X fuel warning: BMW enum priority, inclusive 50 km fallback, invalid/missing data, freshness/provider loss and unit independence passed."
+    },
+    {
+      "test": "test-f8x-info-data.js",
+      "passed": true,
+      "output": "F8X info data: wire sentinels, numeric/named units, scaling, half-degree temperature, provider loss/reconnect and independent freshness passed."
+    },
+    {
+      "test": "test-f8x-info-font.js",
+      "passed": true,
+      "output": "F8X info font: all glyphs have ink and stable metrics; 51 real display/extreme-conversion strings fit250px without clipping. Widest: \ue001 2824.8 l/100km (231px)."
+    },
+    {
+      "test": "test-f8x-info-runtime.js",
+      "passed": true,
+      "output": "F8X info runtime: real decoded car date/time/units, half degrees, average pages, invalid/stale/provider-loss handling, fuel priority restoration and honest padded footer passed."
+    },
+    {
+      "test": "test-f8x-lower-arc.js",
+      "passed": true,
+      "output": "F8X lower arc: tachometer alignment, scaled placements, gear clearance, native effect without image memory, cached lighting and no idle updates passed."
+    },
+    {
+      "test": "test-f8x-motion.js",
+      "passed": true,
+      "output": "{\"fps\":30,\"light\":\"day\",\"commandsPerSecond\":277.3,\"KiBPerSecond\":20.13,\"pixelWrites\":0,\"hostCpuMs\":11.05}\n{\"fps\":60,\"light\":\"day\",\"commandsPerSecond\":571.4,\"KiBPerSecond\":41.54,\"pixelWrites\":0,\"hostCpuMs\":17.12}\n{\"fps\":30,\"light\":\"night\",\"commandsPerSecond\":219.8,\"KiBPerSecond\":15.53,\"pixelWrites\":0,\"hostCpuMs\":8.04}\n{\"fps\":60,\"light\":\"night\",\"commandsPerSecond\":455.4,\"KiBPerSecond\":32.24,\"pixelWrites\":0,\"hostCpuMs\":10.16}\nF8X motion: bounded settling, no overshoot, coherent companion layers, invalid recovery, stationary silence and pose-only 30/60Hz payload passed."
+    },
+    {
+      "test": "test-f8x-parking-brake.js",
+      "passed": true,
+      "output": "F8X parking brake: decoder, freshness, provider lifecycle and applied-only rendering passed."
+    },
+    {
+      "test": "test-f8x-preview-restart.js",
+      "passed": true,
+      "output": "F8X preview restart: overlapping watcher/button requests never create duplicate app instances."
+    },
+    {
+      "test": "test-f8x-rpm-limit.js",
+      "passed": true,
+      "output": "Passed: permitted-RPM raw decode, notifier-only subscription, reduction enum, monotonic freshness, invalid input, provider loss/recovery, late teardown, and missing interface."
+    },
+    {
+      "test": "test-f8x-runtime-limits.js",
+      "passed": true,
+      "output": "F8X live-limit runtime: cold/warm/shrinking bands, clearing and recovery, explicit Manual and simulation isolation passed."
+    },
+    {
+      "test": "test-f8x-signal-lifecycle.js",
+      "passed": true,
+      "output": "F8X signal lifecycle: pending reads, availability, late events and poll-timer teardown passed."
+    },
+    {
+      "test": "test-f8x-temperature-notifier.js",
+      "passed": true,
+      "output": "F8X temperature: generated notification-only manifest, actual signal handler, no getter/polling, and provider loss passed."
+    },
+    {
+      "test": "test-parked-f8x.js",
+      "passed": true,
+      "output": "Passed: stock startup, no demo, valid stationary zeros, independent signal timeouts, invalid RPM, provider loss, renderer reconnect, and manual Off."
+    }
+  ],
+  "manifest": {
+    "version": "0.16.1",
+    "scope": "Declared interface capabilities checked against connected G82 catalog; no proof of live delivery",
+    "checked_operations": 71,
+    "interfaces": 36,
+    "errors": []
+  }
+}

@@ -216,9 +216,8 @@ class F8xRuntime {
                     this.program = PROGRAMS[raw] || (typeof raw === 'string' && /^D(?:_|$)/.test(raw) ? 'D' : null);
                 },
             },
-            // Poll as well as subscribe: a steady exterior temperature must stay fresh.
+            // The G82 catalog exposes a notifier only; no getter or polling.
             'de.bmw.infrastructure.EnvironmentalInformation': {
-                $pollMs: 1000,
                 $onAvailability: (available) => this.infoData.availability('ambient', available),
                 ExteriorTemperature: (v) => this.infoData.ambient(v),
             },

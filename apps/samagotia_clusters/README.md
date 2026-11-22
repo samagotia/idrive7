@@ -51,3 +51,8 @@ The diagram is one resident 72×116 RGBA image, counted twice by the renderer (~
 BMW door/Check Control popups may take the panel slot. The app changes no native ownership, yielding or takeover flags; it must not fight BMW to keep its replica visible. The Mac proves our decoding, priority, pixels and fallback logic, not G82 reception or native warning visibility. No car has been connected for this feature.
 
 Mac controls are under **Simulated signals → Doors / panels (SIM)**: G82/G80/G05/unknown, steering side, provider availability and every closure. These feed car-shaped packets into the same reader as production. Test examples: a passenger front door in G82/LHD, the same input in RHD, G80 with both rear doors, bonnet plus boot, unknown steering, and provider loss/recovery while a warning is active. The Mac alone also supplies the explicitly simulated mileage trip fixture described above.
+
+
+## G82 installation compatibility (0.16.1)
+
+Exterior temperature requests notification permission only (`s`). The connected G82's interface catalog exposes `ExteriorTemperature.notifier` with no getter; version 0.16.0 incorrectly requested `rs`, which the Store refused before installing the app. The runtime subscribes without polling. Missing, invalid, unavailable or stale temperature still shows `--`; notification delivery has not yet been verified in our running app. The complete generated manifest is checked locally against the connected head unit's catalog before publication; that catalog is kept private and is not distributed. This validates declared capabilities, not live signal delivery or native warning takeover.
