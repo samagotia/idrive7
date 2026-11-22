@@ -4,23 +4,19 @@ Owner for this work: `/root/own_turn_indicators`. Reuse this agent for turn-indi
 
 The owner's G82 photo shows two right-turn arrows: the lower arrow matches the app's reference position, while the upper arrow is consistent with BMW's stock-controlled indicator. The peer [Cruzen cluster documentation](https://github.com/cruzen991/Cluster#readme) records that instrument panels render below BMW's warning and indicator telltales. That source describes observations on another car; the exact native-versus-hardware implementation on this G82 has not been established.
 
-The app does not relocate or suppress BMW telltales. It avoids duplicating them by default. `f8xTurnIndicators` is an explicit presentation preference, not hardware detection:
+The app does not relocate, suppress or duplicate BMW's turn telltales. It contains no production turn-arrow widgets, turn-signal subscription, blink controller, direction decoder or turn-indicator setting. The historical `f8xTurnIndicators` preference is ignored even when saved as `f8x`. Old custom turn and parking-brake widgets are filtered before layer planning, so saved preferences/layouts cannot restore duplicate telltales.
 
-- `stock` / **BMW indicators** is the default, including existing installations with no saved value. No in-panel F8X arrows are created.
-- `f8x` / **F8X indicators** explicitly adds the reference left/right arrows for installations that need them. BMW indicators may remain visible as well.
-- Invalid or unknown saved values select the BMW/default presentation.
-
-The control appears in **Vehicle settings**. It fits above the vehicle status and bottom diagnostics; the General settings grid is not extended. The cruise icon retains its existing reference anchor to the right of the left-turn position, even when F8X turn arrows are omitted.
+The parking-brake reader, schema, signal permissions and renderer icon were also removed in coordination with `/root/own_parking_brake`. A shared `f8x_gauge_geometry.js` retains only the generic pivot calculation needed by other artwork. There is no setting to turn these stock-telltale replicas back on. BMW remains responsible for its own lamps and native warning layers.
 
 Owned implementation paths and touchpoints:
 
-- `shared/f82_sprite.js`: reference positions, `turnIndicatorWidgets`, turn decoding.
-- `shared/f8x_runtime.js`: turn-layer selection and live blink presentation only; other runtime areas have separate owners.
-- `apps/samagotia_clusters/app.json` and `release.json`: turn setting schema and public visibility. The same coordinated edit adds `Vehicle2.statusStandstillFunctions: rs` for the parking-brake owner's reader.
-- `shared/f8x_page.js`: Vehicle settings placement.
-- `bench/test-f8x-turn-indicators.js`: schema, real rebuild layer selection, real runtime blink visibility, cruise anchoring and actual page-control bounds.
+- `shared/f82_sprite.js`: sequential predicate; no custom turn-arrow widget factory or decoder remains.
+- `shared/f8x_runtime.js`: exclusion of obsolete turn metadata before planning; no turn subscriptions or blink branch.
+- `apps/samagotia_clusters/app.json` and `release.json`: no turn/brake settings or corresponding signal permissions. `CDS.statusGearIndicator` remains for verified gear recommendations.
+- `shared/f8x_page.js`: retained Vehicle settings, with no turn/brake controls.
+- `bench/test-f8x-turn-indicators.js`: removed schema/permissions/renderers and actual layer planning against legacy preferences and widgets. Cruise set-speed marker and sequential recommendations remain, while duplicate telltales are absent.
 
-Validation: turn-indicator, page-performance, cruise-art and oil-scale suites pass. The test exercises default, explicit BMW, explicit F8X and invalid settings against the actual runtime's layer-plan path. It checks left/right/hazard illumination and the dark blink phase. The physical stock telltales remain a parked-car verification item; Mac tests do not emulate BMW's compositor or lamps.
+Validation covers default, old BMW, old F8X and invalid saved turn preferences combined with both historical brake styles. It injects legacy widget IDs, icons and metadata and confirms none reach the real runtime layer plan. Mac tests do not emulate BMW's native compositor or physical lamps; the retained stock display still requires a parked comparison.
 
 No app release or car deployment is performed by this agent.
 

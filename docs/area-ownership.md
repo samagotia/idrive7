@@ -4,8 +4,8 @@ The user requested that delegated agents implement changes and retain responsibi
 
 | Area | Responsible agent | Contract and evidence |
 | --- | --- | --- |
-| Turn indicators and sequential gear-recommendation arrows | `/root/own_turn_indicators` | [Owner notes](turn-indicator-ownership.md); turn and gear-recommendation tests |
-| Parking-brake signal decoding and warning placement | `/root/own_parking_brake` | [Owner notes](parking-brake-ownership.md); parking-brake and artwork tests |
+| BMW-only turn-telltale policy and sequential gear-recommendation arrows | `/root/own_turn_indicators` | [Owner notes](turn-indicator-ownership.md); turn and gear-recommendation tests |
+| BMW-only parking-brake policy and shared gauge geometry | `/root/own_parking_brake` | [Owner notes](parking-brake-ownership.md); shared gauge geometry and no-duplicate composition tests |
 | Full-panel backing and compositor/client coverage | `/root/own_panel_compositing` | `shared/f8x_panel_backing.js`; panel-underlay, wire-backing and parked fallback tests |
 | Vehicle identity, automatic oil-scale profiles and RPM-candidate checks | `/root/own_dynamic_engine_limits` | [Research and ownership](dynamic-engine-limits-research.md); engine-profile, oil-scale and RPM-limit tests |
 | RPM input cadence and signal-read lifecycle | `/root/rpm_signal_latency` | `shared/f8x_vehicle.js`; RPM-acquisition and signal-lifecycle tests |

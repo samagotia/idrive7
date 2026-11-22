@@ -51,7 +51,7 @@ const state = Object.assign(Object.create(Runtime.prototype), { ctx, log, kombiA
     assert.equal(state.fuelWarningState().source, 'range-fallback');
     // Visibility is a cached state update, independent of distance-unit settings.
     const writes = [];
-    const x = { w: { warningRole: 'attentionTriangle' }, ref: 1, last: null, warningPaint: undefined,
+    const x = { w: { warningRole: 'fuelReserveIcon' }, ref: 1, last: null, warningPaint: undefined,
         c: { set(ref, pose) { writes.push(pose.visible); }, pixels() { throw Error('visibility must not upload artwork'); } } };
     x.warningPaint = state.f82Light;
     Runtime.prototype._update.call(state, x, now, false);

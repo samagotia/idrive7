@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // Original F8X-style warning artwork. One small cached image, changed only by
 // closure state/layout/lighting. BMW's own warning/slot ownership stays authoritative.
-const { pivotOf } = require('./f8x_brake_art');
+const { pivotOf } = require('./f8x_gauge_geometry');
 const CACHE_LIMIT = 16;
 const cache = new Map();
 const W = 72, H = 116, SS = 3;

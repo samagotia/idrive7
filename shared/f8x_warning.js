@@ -23,6 +23,6 @@ function present(doors, fuel) {
     const diagram = kind === 'closure' && mappable;
     const key = [kind || 'none', text, critical, state.bodyStyle].concat(
         ['frontLeft', 'frontRight', 'rearLeft', 'rearRight', 'bonnet', 'boot', 'boot2'].map((name) => state[name] || 'unknown')).join('|');
-    return { kind, text, critical, diagram, pump: kind === 'fuel', triangle: kind !== null, doorState: state, key };
+    return { kind, text, critical, diagram, pump: kind === 'fuel', doorState: state, key };
 }
 module.exports = { present };

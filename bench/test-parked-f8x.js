@@ -127,7 +127,9 @@ async function run() {
     let hud;
     try {
         const hu = headUnit(stage, { live: true, dataDir, image: async () => {},
-            sets: { hudLayout: 'our_m4', demo: 'on' },
+            sets: { hudLayout: 'our_m4', demo: 'on',
+                // Settings left by an older release must not restore duplicates.
+                f8xBrakeStyle: 'icon', f8xTurnIndicators: 'f8x' },
             log: { info() {}, warn() {}, debug() {}, error: (msg) => { throw new Error(msg); } } });
         const { settings, spec } = hu;
         assert.equal(spec.id, 'samagotia_clusters');
@@ -186,6 +188,17 @@ async function run() {
         assert.equal(underlayLayer.opts.klass, 'ambient');
         assert.equal(underlayLayer.opts.z, -1);
         assert(!underlayLayer.opts.exclusive, 'native BMW warnings retain priority');
+        const produced = Array.from(hud.widgets.values()).map((x) => x.w);
+        assert(!produced.some((w) => w.indicator || w.warning === 'parkingBrake'
+            || w.icon === 'parkingBrake' || w.icon === 'turnLeft' || w.icon === 'turnRight'
+            || w.text === 'BRAKE' || w.cruiseRole === 'symbol'
+            || w.icon === 'cruise' || w.warningRole === 'attentionTriangle'),
+        'actual F8X composition never recreates stock status telltales, even with legacy preferences');
+        for (const id of ['gear_selector', 'f8x_cruise_marker', 'f8x_fuel_reserve_text', 'f8x_fuel_reserve_icon']) {
+            assert(produced.some((w) => w.id === id), 'retain covered base-panel information: ' + id);
+        }
+        assert(produced.some((w) => w.doorRole), 'retain live opening diagram');
+        assert(produced.some((w) => w.gearRecommendation), 'retain sequential shift recommendation');
         await delay(1650);
         assert(active(), 'quiet but readable zero values keep F8X active');
         assert.equal(hud.car.data().demo, false);

@@ -20,14 +20,14 @@ const load = (name, dependencies) => {
 };
 const text = load('f8x_text.js', { './f8x_data': { json: readJson } });
 const fuelArt = load('f8x_fuel_warning_art.js', {
-    './f8x_brake_art': require('../shared/f8x_brake_art'), './f8x_icons': require('../shared/f8x_icons'), './f8x_text': text,
+    './f8x_gauge_geometry': require('../shared/f8x_gauge_geometry'), './f8x_icons': require('../shared/f8x_icons'), './f8x_text': text,
 });
 const Runtime = load('f8x_runtime.js', { './f8x_warning': warning, './f8x_door_art': doorArt,
     './f8x_text': text, './f8x_fuel_warning_art': fuelArt });
 const fixtureLayout = readJson('layouts/our_m4.json');
 const readAsset = (name) => readJson('f82/' + name + '.json');
 const widgets = fuelArt.widgetsFor(fixtureLayout, readAsset).concat(doorArt.widgetsFor(fixtureLayout, readAsset));
-assert.strictEqual(widgets.length, 4, 'three shared warning widgets plus one small diagram');
+assert.strictEqual(widgets.length, 3, 'message/pump plus one small diagram, without a general telltale replica');
 let now = 1000;
 const streams = {};
 const tick = () => new Promise((resolve) => setImmediate(resolve));
@@ -68,7 +68,7 @@ async function run() {
         const diagram = layers.find((x) => x.w.doorRole);
         const label = layers.find((x) => x.w.warningRole === 'fuelReserveText');
         const pump = layers.find((x) => x.w.warningRole === 'fuelReserveIcon');
-        const triangle = layers.find((x) => x.w.warningRole === 'attentionTriangle');
+        assert(!layers.some((x) => x.w.warningRole === 'attentionTriangle'));
         const update = () => layers.forEach((x) => runtime._update(x, now, false));
         const lastVisible = (layer) => poses.filter((p) => p.ref === layer.ref).slice(-1)[0].visible;
         const uploadsFor = (layer) => writes.filter((p) => p.ref === layer.ref).length;
@@ -78,11 +78,11 @@ async function run() {
 
         fuel = { active: true }; update();
         assert.strictEqual(runtime.warningPresentation().kind, 'fuel');
-        assert(lastVisible(label) && lastVisible(pump) && lastVisible(triangle) && !lastVisible(diagram));
+        assert(lastVisible(label) && lastVisible(pump) && !lastVisible(diagram));
         assert.strictEqual(runtime._infoPage(), 'rangeRemaining', 'fresh low fuel retains numeric BC priority');
         feedMeta({}); feed({ statusDoorSwitchDRD: 1 }); update();
         assert.strictEqual(runtime.warningPresentation().text, 'Door open');
-        assert(lastVisible(diagram) && !lastVisible(pump) && lastVisible(triangle));
+        assert(lastVisible(diagram) && !lastVisible(pump));
         assert.strictEqual(runtime._infoPage(), 'rangeRemaining', 'door text does not cancel low-fuel range priority');
         assert(diagram.px.some((v, i) => i % 4 === 3 && v > 128), 'a confirmed mapped opening has real car ink');
         const activeWrites = uploadsFor(diagram), still = total();
@@ -116,15 +116,15 @@ async function run() {
         feedMeta({ typeSteering: 15 }); feed({ statusDoorSwitchDRD: 1 }); update();
         assert.strictEqual(runtime.warningPresentation().text, 'Door open');
         assert(!lastVisible(diagram), 'unknown steering retains warning text without a misleading closed-looking diagram');
-        assert(lastVisible(triangle));
+        assert(lastVisible(label));
         settings.f8xSteeringSide = 'lhd'; update(); assert(lastVisible(diagram), 'explicit side override can render known opening');
         settings.f8xSteeringSide = 'auto';
         feed({}); update();
         assert.strictEqual(runtime.warningPresentation().kind, 'fuel', 'closing door restores still-active fuel warning');
-        assert(lastVisible(pump) && lastVisible(triangle) && !lastVisible(diagram));
+        assert(lastVisible(pump) && !lastVisible(diagram));
         fuel = { active: false }; update();
         assert.strictEqual(runtime._infoPage(), 'date', 'cleared fuel restores saved page');
-        assert(!lastVisible(label) && !lastVisible(pump) && !lastVisible(triangle) && !lastVisible(diagram));
+        assert(!lastVisible(label) && !lastVisible(pump) && !lastVisible(diagram));
 
         feedMeta({}); feed({ statusDoorSwitchDRD: 1 }); update();
         fuel = { active: true }; body.available = false; body.change(false); update();
@@ -136,10 +136,10 @@ async function run() {
 
         const beforeUnknown = poses.length;
         fuel = { active: null }; update();
-        assert(poses.length > beforeUnknown); assert(!lastVisible(triangle));
+        assert(poses.length > beforeUnknown); assert(!lastVisible(label) && !lastVisible(pump) && !lastVisible(diagram));
         let stopped = 0;
         const cleanup = Object.assign(Object.create(Runtime.prototype), { f82Motion: new Map(), layouts: {},
-            car: { stop() {} }, parkingBrake: { stop() {} }, rpmLimit: { stop() {} }, cruise: { stop() {} },
+            car: { stop() {} }, rpmLimit: { stop() {} }, cruise: { stop() {} },
             doors: { stop() { stopped++; } }, clients: [], atlases: new Map() });
         cleanup.stop(); assert.strictEqual(stopped, 1, 'runtime teardown stops door watches');
         console.log('F8X door warning runtime: shared warning ownership, real contact/model/steering decode, priority, no phantom coupe doors, cached Day/Night images, zero idle uploads, independent fuel restoration, unknown/reconnect and unchanged native ownership passed.');

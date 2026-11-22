@@ -116,7 +116,7 @@ function exercise(fps, light) {
     const rpm = runtime.f82Needles.find((x) => x.w.signal === 'rpm' && !x.w.shadowOnly);
     runtime._updateF82(rpm, now, false);
     assert.equal(client.layers.get(rpm.ref).opts.rotate, Math.round(sprite.rpmAngle(rpm.w.curve, 1500, false) * 100) / 100);
-    runtime.layouts = {}; runtime.parkingBrake = runtime.rpmLimit = runtime.cruise = { stop() {} };
+    runtime.layouts = {}; runtime.rpmLimit = runtime.cruise = { stop() {} };
     runtime.clients = []; runtime.atlases = new Map(); runtime.car.stop = () => {};
     runtime._queueF82(); assert(timers.size > 0);
     runtime.stop();

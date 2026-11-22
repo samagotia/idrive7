@@ -18,14 +18,12 @@ const { CarFormats } = require('./f8x_car_formats');
 const infoFormat = require('./f8x_info_format');
 const bakedData = require('./f8x_data');
 const f82Sprite = require('./f82_sprite');
-const { ParkingBrake } = require('./f8x_brake');
 const { RpmLimit } = require('./f8x_rpm_limit');
 const { Cruise } = require('./f8x_cruise');
 const { GearRecommendation } = require('./f8x_gear_recommendation');
 const gearRecommendationArt = require('./f8x_gear_recommendation_art');
 const cruiseArt = require('./f8x_cruise_art');
 const { NeedleMotion, framePlan } = require('./f8x_motion');
-const { widgetOf: brakeWidgetOf } = require('./f8x_brake_art');
 const { evaluateFuelWarning } = require('./f8x_fuel_warning');
 const fuelWarningArt = require('./f8x_fuel_warning_art');
 const { Doors } = require('./f8x_doors');
@@ -46,7 +44,6 @@ const TEXT_MS = 200;
 const F82_STARTUP_SECONDS = 15;
 const F82_PEDAL_FRESH_MS = 1000;
 const F82_SHIFT_HALF_PERIOD_MS = 1000 / 6;
-const F82_TURN_HALF_PERIOD_MS = 330;
 const F82_AUX_NIGHT_SHADOW_OPACITY = 0.24;
 const F82_AUX_NIGHT_SHADOW_OFFSET = 0.60;
 const F82_AUX_DAY_SHADOW_OFFSET = 1.60;
@@ -120,10 +117,6 @@ class F8xRuntime {
         this.f82NextFrameAt = null;
         this.f82Motion = new Map();
         this.f82Light = 'day';
-        this.f82TurnDirection = 'off';
-        this.f82TurnChangedAt = 0;
-        this.f82TurnField = null;
-        this.f82TurnSubscription = null;
         this.f82Pedal = null;
         this.f82PedalAt = 0;
         this.f82StartupUntil = null;
@@ -149,7 +142,6 @@ class F8xRuntime {
         this.gearRecommendation = new GearRecommendation(ctx);
         this._formatSignature = null;
         this._setupVehicleData();
-        this.parkingBrake = new ParkingBrake(ctx);
         this.rpmLimit = new RpmLimit(ctx);
         this.cruise = new Cruise(ctx);
         this.doors = new Doors(ctx);
@@ -237,7 +229,6 @@ class F8xRuntime {
         this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'gear', 'condition'], extra, this.parkedTest);
         this.car.setRedline(this.setting('f82Redline'));
         this.car.onSample(() => this._queueF82());
-        this._watchF82Turns();
     }
 
     fuelWarningState() {
@@ -276,7 +267,7 @@ class F8xRuntime {
     _updateWarning(x, force) {
         const p = this.warningPresentation(), w = x.w;
         const visible = w.doorRole ? p.diagram : w.warningRole === 'fuelReserveIcon' ? p.pump
-            : w.warningRole === 'attentionTriangle' ? p.triangle : p.kind !== null;
+            : w.warningRole === 'fuelReserveText' && p.kind !== null;
         const key = w.doorRole ? doorArt.keyFor(p.doorState, this.f82Light, w.w, w.h)
             : w.warningRole === 'fuelReserveText' ? p.text + '|' + p.critical + '|' + p.kind + '|' + this.f82Light : this.f82Light;
         if (visible && (force || x.warningPaint !== key)) {
@@ -287,29 +278,6 @@ class F8xRuntime {
             x.last = visible;
             x.c.set(x.ref, { visible, opacity: 1 });
         }
-    }
-
-    _watchF82Turns() {
-        const receive = (field) => (value) => {
-            if (this.stopped) return;
-            const direction = f82Sprite.turnDirection(value);
-            if (direction === null && field !== this.f82TurnField) return;
-            this.f82TurnField = field;
-            this._setF82TurnDirection(direction || 'off');
-        };
-        this.ctx.signals.watch('de.bmw.body.Light', '1', {
-            StatusFunctionsIndicators: receive('StatusFunctionsIndicators'),
-            StatusFunctionsIndicators2: receive('StatusFunctionsIndicators2'),
-        }, this.log).then((sub) => {
-            if (this.stopped) { if (sub.shutdown) sub.shutdown(); return; }
-            this.f82TurnSubscription = sub;
-        }).catch((error) => this.log.info('turn indicators unavailable: ' + error.message));
-    }
-
-    _setF82TurnDirection(direction) {
-        if (direction === this.f82TurnDirection) return;
-        this.f82TurnDirection = direction;
-        this.f82TurnChangedAt = Date.now();
     }
 
     _clientAt(i) {
@@ -415,11 +383,9 @@ class F8xRuntime {
         this.f82Needles = [];
         this.f82Motion.clear();
         this.f82NextFrameAt = null;
-        if (this.f82TurnSubscription) this.f82TurnSubscription.shutdown();
         if (this.layouts.close) this.layouts.close();
         this.car.stop();
         if (this.carFormats) this.carFormats.stop();
-        this.parkingBrake.stop();
         this.rpmLimit.stop();
         this.cruise.stop();
         if (this.gearRecommendation) this.gearRecommendation.stop();
@@ -867,7 +833,13 @@ class F8xRuntime {
             return;
         }
         this.problem = null;
-        let shown = layout.widgets.filter((w) => !(w.toggle && !this._toggleOn(w.toggle)));
+        // BMW retains these telltales. Saved app widgets cannot reintroduce duplicates.
+        let shown = layout.widgets.filter((w) => !w.indicator && w.icon !== 'turnLeft' && w.icon !== 'turnRight'
+            && w.id !== 'f82_turn_left' && w.id !== 'f82_turn_right' && w.warning !== 'parkingBrake' && w.icon !== 'parkingBrake'
+            && w.id !== 'f8x_parking_brake' && w.text !== 'BRAKE'
+            && w.id !== 'f8x_cruise_symbol' && w.cruiseRole !== 'symbol' && w.icon !== 'cruise'
+            && w.id !== 'f8x_attention_triangle' && w.warningRole !== 'attentionTriangle' && w.icon !== 'attentionTriangle'
+            && !(w.toggle && !this._toggleOn(w.toggle)));
         if (this.previewF82Engine === 'diesel' && shown.some((w) => w.type === 'f82sprite' && w.shiftTrack)) {
             const diesel = this._f82Asset('rpm-face-diesel');
             shown = shown.map((w) => {
@@ -896,10 +868,9 @@ class F8xRuntime {
             if (this.setting('f82DigitalSpeed')) {
                 shown = shown.concat(f82Sprite.digitalSpeedWidgets, Object.assign({}, f82Sprite.infoClock, { y: 562 }));
             } else shown.push(f82Sprite.infoAmbient, f82Sprite.infoClock);
-            const brake = brakeWidgetOf({ widgets: shown }, this.setting('f8xBrakeStyle'));
             const cruise = cruiseArt.widgetsFor({ widgets: shown });
             const lowerArc = f82Sprite.lowerArcOf({ widgets: shown }, (id) => this._f82Asset(id));
-            shown = shown.concat(f82Sprite.infoWidgets, f82Sprite.turnIndicatorWidgets(this.setting('f8xTurnIndicators')), brake ? [brake] : [], cruise,
+            shown = shown.concat(f82Sprite.infoWidgets, cruise,
                 gearRecommendationArt.widgetsFor({ widgets: shown }),
                 lowerArc ? [lowerArc] : [], fuelWarningArt.widgetsFor({ widgets: shown }), doorArt.widgetsFor({ widgets: shown }));
         }
@@ -1090,7 +1061,7 @@ class F8xRuntime {
         else {
             c = this._clientAt(this._connOf(w));
             const base = { target: this.target, klass: w.class || 'content', z: w.z || 0, x: w.x, y: w.y, w: w.w, h: w.h };
-            if (w.indicator || w.warning || w.cruiseRole || w.warningRole || w.doorRole || w.gearRecommendation) base.visible = false;
+            if (w.warning || w.cruiseRole || w.warningRole || w.doorRole || w.gearRecommendation) base.visible = false;
             if (w.type === 'f82sprite') {
                 sprite = this._f82Asset(w.asset);
                 base.sampling = 'bilinear';
@@ -1170,10 +1141,6 @@ class F8xRuntime {
         if (signature !== this._formatSignature) {
             this._formatSignature = signature;
             if (this.activeName && this.activeName !== 'off') this._rebuild();
-        }
-        if (this.f82TurnSubscription && !this.f82TurnSubscription.available) {
-            this.f82TurnField = null;
-            this._setF82TurnDirection('off');
         }
         if (!this.client.ready) return;
         this._queueF82();
@@ -1308,8 +1275,7 @@ class F8xRuntime {
         const reading = this.cruise.value();
         const state = reading && reading.state;
         const valid = state === 'active' || state === 'standby';
-        const pose = valid && (x.w.cruiseRole === 'symbol' ? { visible: true }
-            : cruiseArt.markerPose(x.w, reading));
+        const pose = valid && x.w.cruiseRole === 'marker' && cruiseArt.markerPose(x.w, reading);
         const key = pose ? state + '|' + JSON.stringify(pose) : 'hidden';
         if (!force && key === x.last) return;
         x.last = key;
@@ -1333,21 +1299,6 @@ class F8xRuntime {
             this._updateWarning(x, force);
         } else if (w.cruiseRole) {
             this._updateCruise(x, force);
-        } else if (w.warning === 'parkingBrake') {
-            const state = this.parkingBrake.value();
-            if (force || state !== x.last) {
-                x.last = state;
-                x.c.set(x.ref, { visible: state === 'applied', opacity: 1 });
-            }
-        } else if (w.indicator) {
-            const direction = this.f82TurnDirection;
-            const on = (direction === w.indicator || direction === 'both')
-                && Math.floor(Math.max(0, now - this.f82TurnChangedAt) / F82_TURN_HALF_PERIOD_MS) % 2 === 0;
-            const opacity = on ? (this.f82Light === 'night' ? 0.8 : 1) : 0;
-            if (force || opacity !== x.last) {
-                x.last = opacity;
-                x.c.set(x.ref, { visible: on, opacity });
-            }
         } else if (w.type === 'f82sprite') {
             this._updateF82(x, now, force);
         } else if (w.type === 'f82shift') {

@@ -13,35 +13,10 @@ function turnArrow(x, y) {
     return Math.min(shaft, head);
 }
 
-function parkingBrake(x, y) {
-    const dx = x - 0.5, dy = y - 0.5;
-    const circle = Math.abs(Math.hypot(dx, dy) - 0.30) - 0.033;
-    // Brackets belong to a larger concentric circle and stop short of top/bottom.
-    const brackets = Math.max(Math.abs(Math.hypot(dx, dy) - 0.455) - 0.030, Math.abs(dy) - 0.30);
-    const stem = Math.max(Math.abs(x - 0.435) - 0.029, Math.abs(y - 0.50) - 0.155);
-    const bowl = Math.max(Math.abs(Math.hypot(x - 0.49, y - 0.435) - 0.085) - 0.027, 0.44 - x);
-    const bowlJoin = Math.max(Math.abs(x - 0.474) - 0.043, Math.abs(y - 0.35) - 0.026);
-    return Math.min(circle, brackets, stem, bowl, bowlJoin);
-}
-
 function segmentDistance(x, y, ax, ay, bx, by) {
     const dx = bx - ax, dy = by - ay;
     const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)));
     return Math.hypot(x - ax - t * dx, y - ay - t * dy);
-}
-
-function cruise(x, y) {
-    const dx = x - 0.5, dy = y - 0.55;
-    const arch = Math.max(Math.abs(Math.hypot(dx, dy) - 0.335) - 0.028, dy - 0.205);
-    let ticks = Infinity;
-    for (const degrees of [-75, -38, 0, 38, 75]) {
-        const a = degrees * Math.PI / 180, sx = Math.sin(a), sy = -Math.cos(a);
-        ticks = Math.min(ticks, segmentDistance(x, y, 0.5 + sx * 0.245, 0.55 + sy * 0.245,
-            0.5 + sx * 0.295, 0.55 + sy * 0.295) - 0.021);
-    }
-    const needle = segmentDistance(x, y, 0.49, 0.57, 0.66, 0.32) - 0.027;
-    const hub = Math.hypot(x - 0.49, y - 0.57) - 0.050;
-    return Math.min(arch, ticks, needle, hub);
 }
 
 function cruiseMarker(x, y) {
@@ -71,20 +46,9 @@ function fuelReservePump(x, y) {
     return Math.min(housing, foot, pipe, nozzle);
 }
 
-function attentionTriangle(x, y) {
-    const side = (Math.abs(x - 0.5) - (y - 0.075) * 0.56) / Math.hypot(1, 0.56);
-    return Math.max(side, y - 0.91);
-}
-
-function attentionExclamation(x, y) {
-    const stem = rectangle(x, y, 0.45, 0.34, 0.55, 0.635);
-    const dot = Math.hypot(x - 0.5, y - 0.745) - 0.045;
-    return Math.min(stem, dot);
-}
-
-const ICONS = { turnLeft: (x, y) => turnArrow(1 - x, y), turnRight: turnArrow, parkingBrake, cruise, cruiseMarker,
+const ICONS = { cruiseMarker,
     shiftUp: (x, y) => turnArrow(1 - y, x), shiftDown: (x, y) => turnArrow(y, x),
-    fuelReservePump, attentionTriangle };
+    fuelReservePump };
 
 function paintIcon(name, w, h, color) {
     const f = ICONS[name], out = Buffer.alloc(w * h * 4, 0);
@@ -97,15 +61,6 @@ function paintIcon(name, w, h, color) {
             if (a <= 0) continue;
             const o = (y * w + x) * 4;
             out[o] = color[0]; out[o + 1] = color[1]; out[o + 2] = color[2]; out[o + 3] = Math.round(a * (color[3] === undefined ? 255 : color[3]));
-            if (name === 'attentionTriangle') {
-                // The exclamation is dark ink, not a transparent hole through
-                // which a bright background or dial texture could show.
-                const dInk = attentionExclamation((x + 0.5 - ox) / s, (y + 0.5 - oy) / s);
-                const ink = Math.max(0, Math.min(1, 0.5 - dInk / aa));
-                for (let channel = 0; channel < 3; channel++) {
-                    out[o + channel] = Math.round(color[channel] * (1 - ink) + [9, 10, 8][channel] * ink);
-                }
-            }
         }
     }
     return out;

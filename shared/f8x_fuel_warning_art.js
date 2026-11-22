@@ -1,11 +1,10 @@
 'use strict';
 // SPDX-License-Identifier: MIT
 // The warning column follows the tachometer and auxiliary oil-gauge placements.
-const { pivotOf } = require('./f8x_brake_art');
+const { pivotOf } = require('./f8x_gauge_geometry');
 const { paintIcon } = require('./f8x_icons');
 const textRaster = require('./f8x_text');
 const LCD_DAY = [184, 187, 139, 255], LCD_NIGHT = [229, 231, 190, 255];
-const TRIANGLE_DAY = [249, 177, 14, 255], TRIANGLE_NIGHT = [255, 191, 20, 255];
 const cached = new Map();
 function assetOf(id) { return require('./f8x_data').json('f82/' + id + '.json'); }
 
@@ -15,8 +14,8 @@ function widgetsFor(layout, readAsset = assetOf) {
     const texture = face && readAsset(face.asset);
     if (!rpm || !oil || oil.x <= rpm.x || !texture || ![face.w, face.h, texture.w, texture.h].every((n) => Number.isFinite(n) && n > 0)) return [];
     const sx = face.w / texture.w, sy = face.h / texture.h;
-    // In the reference the triangle and larger fuel pump occupy one column,
-    // between the lower-right tachometer end and the inner oil-gauge rim.
+    // The message and pump belong to the information panel. BMW retains
+    // responsibility for general attention and other status telltales.
     const column = Math.round(rpm.x + (oil.x - rpm.x) * 0.62);
     const common = { z: 4, own: true, color: LCD_DAY.slice(), nightColor: LCD_NIGHT.slice() };
     const widgets = [
@@ -25,9 +24,6 @@ function widgetsFor(layout, readAsset = assetOf) {
             y: Math.round(rpm.y + 284 * sy), w: 190, h: 30 }),
         Object.assign({}, common, { id: 'f8x_fuel_reserve_icon', warningRole: 'fuelReserveIcon', type: 'icon',
             icon: 'fuelReservePump', x: column - 25, y: Math.round(rpm.y + 277 * sy), w: 50, h: 58 }),
-        Object.assign({}, common, { id: 'f8x_attention_triangle', warningRole: 'attentionTriangle', type: 'icon',
-            icon: 'attentionTriangle', x: column - 14, y: Math.round(rpm.y + 168 * sy), w: 28, h: 28,
-            color: TRIANGLE_DAY.slice(), nightColor: TRIANGLE_NIGHT.slice() }),
     ];
     // A custom saved layout must leave room for warning labels. Don't draw
     // clipped or misplaced fragments if the gauges have been moved off panel.
@@ -43,4 +39,4 @@ function pixelsFor(widget, lighting) {
     return cached.get(key);
 }
 
-module.exports = { widgetsFor, pixelsFor, LCD_DAY, LCD_NIGHT, TRIANGLE_DAY, TRIANGLE_NIGHT };
+module.exports = { widgetsFor, pixelsFor, LCD_DAY, LCD_NIGHT };

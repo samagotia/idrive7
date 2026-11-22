@@ -142,12 +142,6 @@
         </select>
       </div>
       <div class="srow">
-        <label for="parking-brake">Parking brake</label>
-        <select id="parking-brake" disabled>
-          <option value="unknown">Unknown</option><option value="released">Released</option><option value="applied">Applied</option>
-        </select>
-      </div>
-      <div class="srow">
         <label for="cruise-state">Cruise (SIM)</label>
         <select id="cruise-state" disabled>
           <option value="off">Off</option><option value="standby">Standby</option><option value="active">Active</option>
@@ -221,7 +215,6 @@
   const driveReady = document.getElementById('f82-drive-ready');
   const gearSelector = document.getElementById('gear-selector');
   const turnSignal = document.getElementById('turn-signal');
-  const parkingBrake = document.getElementById('parking-brake');
   const cruiseState = document.getElementById('cruise-state');
   const fuelReserve = document.getElementById('fuel-reserve');
   fuelReserve.onchange = () => pushSignals();
@@ -238,7 +231,6 @@
   const cruiseUnit = document.getElementById('cruise-unit');
   cruiseState.onchange = () => pushSignals();
   cruiseUnit.onchange = () => pushSignals();
-  parkingBrake.onchange = () => pushSignals();
   gearSelector.onchange = () => pushSignals();
   turnSignal.onchange = () => pushSignals();
   distanceUnits.onchange = () => setSetting('f82DistanceUnits', distanceUnits.value);
@@ -710,7 +702,6 @@
           driveReady.checked = m.values.driveReady === true;
           gearSelector.value = m.values.selector || '';
           turnSignal.value = m.values.turnSignal || 'off';
-          parkingBrake.value = m.values.parkingBrake || 'unknown';
           cruiseState.value = m.values.cruiseState || 'off';
           fuelReserve.value = m.values.fuelReserve || 'unknown';
           cruiseUnit.value = m.values.cruiseUnit || 'kmh';
@@ -735,7 +726,7 @@
   });
   function values() {
     const o = { driveReady: driveReady.checked, selector: gearSelector.value, turnSignal: turnSignal.value,
-      parkingBrake: parkingBrake.value, cruiseState: cruiseState.value, cruiseUnit: cruiseUnit.value, fuelReserve: fuelReserve.value };
+      cruiseState: cruiseState.value, cruiseUnit: cruiseUnit.value, fuelReserve: fuelReserve.value };
     o.doorModel = doorModel.value; o.doorSteering = doorSteering.value; o.doorProvider = doorProvider.value;
     DOOR_CONTROLS.forEach(([key]) => { o[key] = document.getElementById(key).value; });
     SIGNALS.forEach(([k]) => { o[k] = Number(document.getElementById('s_' + k).value); });
@@ -752,13 +743,11 @@
     DOOR_CONTROLS.forEach(([key]) => { document.getElementById(key).disabled = m !== 'manual'; });
     gearSelector.disabled = m !== 'manual';
     turnSignal.disabled = m !== 'manual';
-    parkingBrake.disabled = m !== 'manual';
     cruiseState.disabled = m !== 'manual';
     fuelReserve.disabled = m !== 'manual';
     if (m !== 'manual') fuelReserve.value = 'unknown';
     cruiseUnit.disabled = m !== 'manual';
     if (m !== 'manual') cruiseState.value = 'off';
-    if (m !== 'manual') parkingBrake.value = 'unknown';
     if (m !== 'manual') turnSignal.value = 'off';
     document.getElementById('mDemo').classList.toggle('on', m === 'demo');
     document.getElementById('mManual').classList.toggle('on', m === 'manual');

@@ -1,8 +1,8 @@
 'use strict';
 // SPDX-License-Identifier: MIT
 // Cruise display only. Target input is canonical km/h from the explicit vehicle unit.
-const { pivotOf } = require('./f8x_brake_art');
-const { angle, turnIndicators } = require('./f82_sprite');
+const { pivotOf } = require('./f8x_gauge_geometry');
+const { angle } = require('./f82_sprite');
 const { paintIcon } = require('./f8x_icons');
 const GREEN = [55, 236, 80, 255], AMBER = [255, 166, 35, 255];
 const MARKER_RADIUS = 203 * 1.15 + 11;
@@ -18,10 +18,9 @@ function widgetsFor(layout, readAsset = assetOf) {
     if (!needle || !Array.isArray(needle.curve) || needle.curve.length < 2 || !texture
         || ![texture.w, texture.h, face.w, face.h].every((n) => Number.isFinite(n) && n > 0)) return [];
     const common = { type: 'icon', z: 4, own: true, color: GREEN.slice() };
-    const leftTurn = layout.widgets.find((w) => w.indicator === 'left') || turnIndicators[0];
+    // BMW owns status telltales. Keep the selected-speed marker in our dial,
+    // whose original speedometer and marker are covered by the opaque panel.
     return [
-        Object.assign({}, common, { id: 'f8x_cruise_symbol', icon: 'cruise', cruiseRole: 'symbol',
-            x: Math.round(leftTurn.x + leftTurn.w + 10), y: Math.round(leftTurn.y + (leftTurn.h - 40) / 2), w: 40, h: 40 }),
         Object.assign({}, common, { id: 'f8x_cruise_marker', icon: 'cruiseMarker', cruiseRole: 'marker',
             x: 0, y: 0, w: 18, h: 22,
             cruiseGeometry: { cx: speed.x, cy: speed.y, rx: MARKER_RADIUS * face.w / texture.w,

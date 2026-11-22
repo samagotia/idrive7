@@ -15,7 +15,7 @@ const COLOURS = {
     blue: '#2b7fff', blueLight: '#5aa2ff', card: '#ffffff08',
 };
 const TABS = [['designs', 'Designs'], ['readouts', 'Readouts'], ['settings', 'Settings'], ['vehicle', 'Vehicle']];
-const GENERAL_SETTINGS = ['units', 'f8xOilScale', 'f8xBacklightColour', 'f8xBrakeStyle', 'consumptionUnits', 'clockSource', 'clock', 'timeZone', 'tankLitres', 'f8xLimitSource', 'f82Redline', 'shiftBefore'];
+const GENERAL_SETTINGS = ['units', 'f8xOilScale', 'f8xBacklightColour', 'consumptionUnits', 'clockSource', 'clock', 'timeZone', 'tankLitres', 'f8xLimitSource', 'f82Redline', 'shiftBefore'];
 
 Object.assign(themes.THEMES.m_tricolour, {
     sel: COLOURS.blue, selText: '#ffffff', accent2: COLOURS.blueLight, bg: COLOURS.background,
@@ -175,10 +175,10 @@ class F8xPage {
 
     drawVehicle(cv) {
         cv.text('Vehicle settings', CONTENT_X, 74, 26, COLOURS.text, { font: 'bold', literal: true });
-        ['f8xVehicleLayout', 'f8xSteeringSide', 'f8xTurnIndicators'].forEach((key, index) => this.drawSetting(cv, key, CONTENT_X, 92 + index * 66, CONTENT_WIDTH));
-        cv.text(this.runtime.doorStatusText(), CONTENT_X, 331, 20, COLOURS.muted, { literal: true });
-        cv.text('Automatic uses the car model and steering position. Override only if needed.', CONTENT_X, 376, 19, COLOURS.muted, { literal: true });
-        cv.text('BMW warning popups keep priority over this display.', CONTENT_X, 411, 19, COLOURS.muted, { literal: true });
+        ['f8xVehicleLayout', 'f8xSteeringSide'].forEach((key, index) => this.drawSetting(cv, key, CONTENT_X, 92 + index * 66, CONTENT_WIDTH));
+        cv.text(this.runtime.doorStatusText(), CONTENT_X, 265, 20, COLOURS.muted, { literal: true });
+        cv.text('Automatic uses the car model and steering position. Override only if needed.', CONTENT_X, 310, 19, COLOURS.muted, { literal: true });
+        cv.text('BMW warning popups keep priority over this display.', CONTENT_X, 345, 19, COLOURS.muted, { literal: true });
     }
 
     drawSettings(cv) {

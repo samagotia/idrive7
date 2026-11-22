@@ -153,12 +153,6 @@ function feedDoors() {
     hu.feed(iface, 'CentralLockingSystemAndPanelStatus2', packet, available);
 }
 
-function feedParkingBrake() {
-    const states = { unknown: 0, released: 1, applied: 2 };
-    const value = mode === 'manual' ? states[manual.parkingBrake] : 0;
-    hu.feed('de.bmw.infotainment.vehicle.CDS', 'statusHandBrake', { statusContactHandBrake: value || 0 });
-}
-
 function feedCruise() {
     const state = mode === 'manual' ? manual.cruiseState : 'off';
     const on = state === 'active' || state === 'standby';
@@ -183,7 +177,6 @@ function feedManual() {
     hu.feed('de.bmw.powertrain.AcceleratorPedal', 'AngleAcceleratorPedal', {
         actualValueAngleAcceleratorPedal: v.pedal === null ? 65535 : Math.round(num('pedal', 0) / 0.025),
     });
-    feedParkingBrake();
     feedCruise();
     hu.feed('de.bmw.infotainment.vehicle.CDS', 'statusEngineSpeed2', { actualValueRPMEngineCrankshaft: raw('rpm', num('rpm', 0)) });
     hu.feed('de.bmw.infotainment.vehicle.Vehicle2', 'statusCarSpeed2', { speedVehicleCentreOfGravity: raw('speed', num('speed', 0)) });
@@ -210,7 +203,6 @@ setInterval(() => {
     out.maxRpm = mode === 'manual' ? num('maxRpm', 7200) : hud._f82ShiftLimit(d.oil);
     out.driveReady = mode === 'manual' && manual.driveReady === true;
     out.selector = mode === 'manual' ? manual.selector : '';
-    out.parkingBrake = mode === 'manual' ? (manual.parkingBrake || 'unknown') : 'unknown';
     out.cruiseState = mode === 'manual' ? (manual.cruiseState || 'off') : 'off';
     out.cruiseUnit = manual.cruiseUnit || 'kmh';
     out.cruiseSpeed = num('cruiseSpeed', 100);
@@ -232,8 +224,7 @@ process.on('message', (m) => {
         if (settings.get('demo') !== want) press('demo', want);
         const indicator = mode === 'manual' ? { left: 3, right: 4, both: 8 }[manual.turnSignal] : 0;
         hu.feed('de.bmw.body.Light', 'StatusFunctionsIndicators2', { controlIndicateDirection: indicator || 0 });
-        feedParkingBrake();
-        feedCruise();
+            feedCruise();
         feedManual();
         feedTripComputer();
         feedDoors();

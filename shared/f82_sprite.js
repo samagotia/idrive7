@@ -78,55 +78,6 @@ const infoWidgets = [
     infoWidget('f82_trip_distance', 'f82TripDistance', 974, 658, 108, 'right'),
 ];
 
-const turnIndicators = [
-    { id: 'f82_turn_left', type: 'icon', icon: 'turnLeft', indicator: 'left', x: 818, y: 107, w: 58, h: 56, z: 3, own: true, color: [55, 236, 80, 255] },
-    { id: 'f82_turn_right', type: 'icon', icon: 'turnRight', indicator: 'right', x: 1044, y: 107, w: 58, h: 56, z: 3, own: true, color: [55, 236, 80, 255] },
-];
-
-// Default to BMW's existing telltales. Extra in-panel arrows can duplicate
-// stock-controlled arrows, as seen on the owner's G82.
-// Other installations can explicitly enable the in-panel reference positions.
-function turnIndicatorWidgets(style) {
-    return style === 'f8x' ? turnIndicators.map((w) => Object.assign({}, w, { color: w.color.slice() })) : [];
-}
-
-// The body-light notifications expose either the stalk command or the active function.
-// Enum values verified against the iDrive 7 Cluster Info signal definitions.
-const TURN_COMMAND = {
-    0: 'off', 1: 'left', 2: 'right', 3: 'left', 4: 'right', 8: 'both',
-    BLINKEN_AUS: 'off', TIPP_BLINKEN_LINKS_EIN: 'left', TIPP_BLINKEN_RECHTS_EIN: 'right',
-    DAUER_BLINKEN_LINKS_EIN: 'left', DAUER_BLINKEN_RECHTS_EIN: 'right', BEIDSEITIGES_BLINKEN_EIN: 'both',
-};
-const TURN_ACTIVE = {
-    off: [0, 'BLINKEN_AUS'],
-    left: [7, 9, 18, 20, 22, 'DAUERBLINKEN_LINKS', 'TIPPBLINKEN_LINKS',
-        'FAS_RICHTUNGSBLINKEN_LOWPRIO_LINKS', 'FAS_RICHTUNGSBLINKEN_MIDPRIO_LINKS', 'FAS_RICHTUNGSBLINKEN_HIGHPRIO_LINKS'],
-    right: [8, 10, 19, 21, 23, 'DAUERBLINKEN_RECHTS', 'TIPPBLINKEN_RECHTS',
-        'FAS_RICHTUNGSBLINKEN_LOWPRIO_RECHTS', 'FAS_RICHTUNGSBLINKEN_MIDPRIO_RECHTS', 'FAS_RICHTUNGSBLINKEN_HIGHPRIO_RECHTS'],
-    both: [1, 5, 6, 11, 12, 13, 16, 17, 24, 25, 'CRASH_BLINKEN', 'DWA_BLINKEN', 'WARNBLINKEN_MANUELL',
-        'UEBERFALLALARM', 'FAS_WARNBLINKEN_AUSPRAEGUNG_1', 'AUFFAHRWARNBLINKEN', 'WARNBLINKEN_NACH_GEFAHRENBREMSUNG',
-        'WARNBLINKEN_VON_RCP', 'FAS_WARNBLINKEN_AUSPRAEGUNG_2', 'FAS_WARNBLINKEN_AUSPRAEGUNG_3'],
-};
-
-function indicatorField(value, key) {
-    if (!value || typeof value !== 'object') return undefined;
-    if (Object.prototype.hasOwnProperty.call(value, key)) return value[key];
-    for (const child of Object.values(value)) {
-        const found = indicatorField(child, key);
-        if (found !== undefined) return found;
-    }
-    return undefined;
-}
-
-function turnDirection(value) {
-    const rawCommand = indicatorField(value, 'controlIndicateDirection');
-    const rawActive = indicatorField(value, 'activeFunctionIndicateDirection');
-    const command = Object.prototype.hasOwnProperty.call(TURN_COMMAND, rawCommand) ? TURN_COMMAND[rawCommand] : null;
-    const active = Object.keys(TURN_ACTIVE).find((state) => TURN_ACTIVE[state].indexOf(rawActive) >= 0);
-    if (active === 'both') return 'both';
-    return command && command !== 'off' ? command : active || command;
-}
-
 function infoPage(page, digitalSpeed) {
     return !digitalSpeed && (page === 'outsideTemperature' || page === 'time') ? 'off' : page;
 }
@@ -303,5 +254,5 @@ function shiftTrackOf(face, needle) {
 }
 
 const f82Sprite = { angle, rpmAngle, isSequential, gearReadout, gearWidget, digitalSpeedWidgets, infoAmbient, infoClock, infoWidgets, validate, lightOf, backlightAsset, oilScaleWidgets, lowerArcOf, shadowOf, shadowOffset, shadowOpacity, glassOf, glassPose,
-    infoPage, infoPageOptions, turnIndicators, turnIndicatorWidgets, turnDirection, previewShiftLimit, shiftBand, shiftBuildCount, shiftTrackOf, SHIFT_TRACK_START_RPM, SHIFT_OIL_WARM_C };
+    infoPage, infoPageOptions, previewShiftLimit, shiftBand, shiftBuildCount, shiftTrackOf, SHIFT_TRACK_START_RPM, SHIFT_OIL_WARM_C };
 if (typeof module !== 'undefined') module.exports = f82Sprite;

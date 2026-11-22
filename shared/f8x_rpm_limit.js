@@ -8,9 +8,10 @@
  * Exact field/type is verified in that catalog; it contains no physical scaling.
  * Factor 50 is independently corroborated by CAN 0x3F9 Rpm_MAX at bits 56..63:
  * https://github.com/billyjack2/CAN-DBC-Collection/blob/6e2f88fd6cd9c1f47d0db7bd022711b106f27027/BMW/F_Series/can1.dbc
- * This agrees with the same SOME/IP field used by IterioDev's shiftlights.js:
+ * The historical IterioDev 0.5.x implementation used the same SOME/IP field:
  * https://github.com/IterioDev/car-apps/blob/22a141241d6d329ea671426749a8a029ac22258e/tools/iteriodev-overlays/shiftlights.js
- * G82 delivery and cold-redline tracking still require a parked comparison with
+ * Current IterioDev 0.6.0 omits that automatic input; the historical example
+ * does not verify S58 scaling. G82 delivery and cold tracking need comparison with
  * the factory tachometer. A catalog entry is not proof that every car sends it.
  */
 const INTERFACE = 'de.bmw.infrastructure.VehicleInformation';

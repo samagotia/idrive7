@@ -23,6 +23,10 @@ The learned-limiter approach has not been added to the parked-test app. The new 
 - [Cruzen Cluster](https://github.com/cruzen991/Cluster/blob/main/apps/mx_classic_cluster/cluster.js): `warmLimit` subtracts up to 2500 RPM at oil temperatures at or below 40°C, interpolating to the configured redline at 80°C. This is another calculated warmup model. Inspected blob `9450ae8c6da70bed66dc3b3dd52dfb8f03e21dec`.
 - [Marko E39 M5 cluster](https://github.com/markoni1408/mgu-e39-m5-cluster/blob/main/shared/hud.js): its E39 prewarning threshold interpolates between cold/warm temperatures and uses configured redline. No general factory oil-scale discovery mechanism was found in this path. Inspected blob `f0677a947aeff6d4037ff15da48c850bb2384a5f`.
 
+The current [IterioDev shift-light source](https://github.com/IterioDev/car-apps/blob/main/tools/iteriodev-overlays/shiftlights.js), inspected blob `038578bb943ff1dd58bc259dc54a8775fdd8df39`, explicitly removes the earlier 0.5.x automatic maximum-RPM and DME-segment inputs in version 0.6.0. Its comment attributes the configured-threshold-only behaviour to a user request dated 20 November 2026. This is not evidence that the old scaling was faulty; it means that current implementation no longer corroborates our live-limit approach.
+
+Cruzen's current app schema defaults its configurable redline to 7000 RPM; its main module passes that setting to the drawing code. Marko's E39 cluster likewise uses a redline setting and temperature-based prewarning calculations. None of these inspected paths establishes a universal, directly readable, correctly scaled S58 maximum-RPM signal.
+
 ## Available automatic identification in our app
 
 The existing `Doors` metadata reader already subscribes to `Vehicle2.statusVehiclePartType`, with a getter and notifier. The owner's catalog declares `typeVehicle` values F80=57, F82=58, F83=59, G80=121, G82=122 and G83=123. `Doors.value()` clears model metadata when it is stale or its provider is lost. No new SOME/IP permission or duplicate subscription is needed to select a known model profile.
